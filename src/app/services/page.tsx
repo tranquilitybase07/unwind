@@ -1,10 +1,13 @@
+"use client"
+
 import { Orb } from "@/components/ui/orb";
 import Image from "next/image";
 import { VoiceButton } from "@/components/ui/voice-button"
+import { useState } from "react";
 
 export default function ServicesPage() {
-    const [state, setState] = useState<"idle" | "recording" | "processing">("idle")
- 
+  const [state, setState] = useState<"idle" | "recording" | "processing">("idle")
+
   return (
     <div className="flex h-screen bg-[#FAFAFA]">
       {/* Left Sidebar */}
@@ -21,7 +24,7 @@ export default function ServicesPage() {
               <path d="M10 11l3-1.5v6l-3 1.5-3-1.5v-6L10 11z" />
             </svg>
           </div>
-          
+
           {/* <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center">
             <svg
               className="w-7 h-7 text-white"
@@ -163,7 +166,7 @@ export default function ServicesPage() {
             <h1 className="text-4xl font-semibold text-gray-900">
               Welcome Back, Akash
             </h1>
-            <p className="text-gray-500 mt-2">Let's check your progress</p>
+            <p className="text-gray-500 mt-2">Let&apos;s check your progress</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -229,7 +232,7 @@ export default function ServicesPage() {
                   What is in your mind?
                 </h2>
                 <p className="text-sm text-white/90">
-                  Let's take a deep breath and relax your mind.
+                  Let&apos;s take a deep breath and relax your mind.
                 </p>
               </div>
 
@@ -238,15 +241,15 @@ export default function ServicesPage() {
                 Generate Image
               </button> */}
               <VoiceButton
-  state={state}
-  onPress={() => {
-    if (state === "idle") {
-      setState("recording")
-    } else {
-      setState("processing")
-    }
-  }}
-/>
+                state={state}
+                onPress={() => {
+                  if (state === "idle") {
+                    setState("recording")
+                  } else {
+                    setState("processing")
+                  }
+                }}
+              />
             </div>
           </div>
 
@@ -733,11 +736,10 @@ export default function ServicesPage() {
             {[10, 11, 12, 13, 14, 15, 16].map((date) => (
               <button
                 key={date}
-                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-semibold transition-all ${
-                  date === 12
+                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-semibold transition-all ${date === 12
                     ? "bg-blue-500 text-white shadow-lg scale-105"
                     : "text-gray-400 hover:bg-white/5"
-                }`}
+                  }`}
               >
                 {date}
               </button>
