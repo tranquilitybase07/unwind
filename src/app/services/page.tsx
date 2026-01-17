@@ -4,6 +4,7 @@ import { Orb } from "@/components/ui/orb";
 import Image from "next/image";
 import { VoiceButton } from "@/components/ui/voice-button"
 import { useState } from "react";
+import { Mic } from "lucide-react";
 
 export default function ServicesPage() {
   const [state, setState] = useState<"idle" | "recording" | "processing">("idle")
@@ -39,7 +40,7 @@ export default function ServicesPage() {
 
         {/* Navigation Icons */}
         <div className="flex-1 flex flex-col items-center space-y-4 pt-4">
-          <button className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+          <button className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-600 hover:bg-blue-600 transition-colors">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -163,10 +164,10 @@ export default function ServicesPage() {
               </svg>
               <span>Sukabumi, Indonesia</span>
             </div> */}
-            <h1 className="text-4xl font-semibold text-gray-900">
+            <h1 className="text-3xl font-semibold text-gray-900">
               Welcome Back, Akash
             </h1>
-            <p className="text-gray-500 mt-2">Let&apos;s check your progress</p>
+            <p className="text-gray-500 mt-1">Let&apos;s check your progress</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -206,29 +207,20 @@ export default function ServicesPage() {
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* Featured Pet Card */}
-          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-[#B8D849] via-[#A8C939] to-[#98BA29] shadow-xl">
-            <div className="bg-gradient-to-b from-[#A8C939] to-[#8BA829] rounded-[1.7rem] p-6 flex flex-col h-full">
-              {/* Header Tag */}
-              {/* <div className="mb-3">
-                <span className="text-xs font-medium text-gray-700 bg-white/40 px-3 py-1.5 rounded-full">
-                  New Instagram Reels Creator
-                </span>
-              </div> */}
-
-              {/* Image */}
-              <div className="mb-4 rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/nature.jpg"
-                  alt="Imaginary Escape"
-                  width={400}
-                  height={250}
-                  className="w-full h-48 object-cover"
-                />
+          <div className="relative items-start rounded-[2rem]  shadow-xl bg-cover" style={{backgroundImage: "url('/images/nature.jpg')"}}>
+             
+             <div className="flex flex-col items-center p-15 rounded-[2rem] bg-black/20 backdrop-blur-xs border border-white/30 shadow-2xl w-full h-full">
+             
+              
+                {/* Mic Button */}
+              <div className="mb-5">
+                <button className="w-20 h-20 hover:cursor-pointer rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <Mic className="w-10 h-10 text-gray-800" />
+                </button>
               </div>
 
-              {/* Title */}
-              <div className="flex-1 mb-4 text-center">
-                <h2 className="text-3xl font-bold text-white mb-1">
+              <div className="flex-1 mb-4 p-4 text-center">
+                <h2 className="text-xl font-bold text-white mb-1">
                   What is in your mind?
                 </h2>
                 <p className="text-sm text-white/90">
@@ -236,21 +228,9 @@ export default function ServicesPage() {
                 </p>
               </div>
 
-              {/* Generate Button */}
-              {/* <button className="w-full bg-gradient-to-r from-[#E8F5A8] to-[#D8E598] text-gray-800 py-3.5 rounded-full font-semibold text-base hover:from-[#F0F7B8] hover:to-[#E0ED98] transition-all shadow-md">
-                Generate Image
-              </button> */}
-              <VoiceButton
-                state={state}
-                onPress={() => {
-                  if (state === "idle") {
-                    setState("recording")
-                  } else {
-                    setState("processing")
-                  }
-                }}
-              />
-            </div>
+
+              </div>
+              
           </div>
 
           {/* Pet Details */}
