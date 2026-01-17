@@ -1,5 +1,5 @@
 import { LeftSidebar } from "@/components/dashboard/LeftSidebar";
-import { RightSidebar } from "@/components/dashboard/RightSidebar";
+import { RightBar } from "@/components/dashboard/RightBar";
 
 export default function DashboardLayout({
   children,
@@ -10,7 +10,7 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-[#FAFAFA]">
       <LeftSidebar />
       {children}
-      <RightSidebar />
+      <RightBar />
     </div>
   );
 }

@@ -22,14 +22,14 @@ export default function Home() {
 
         <div className="flex items-center gap-8">
           <Link
-            href="/services"
+            href="/dashboard"
             className="text-gray-900 font-medium hover:text-gray-600"
           >
-            Services
+            Dashboard
           </Link>
-          <a href="#" className="text-gray-900 font-medium hover:text-gray-600">
-            Clinics
-          </a>
+          <Link href="/hero" className="text-gray-900 font-medium hover:text-gray-600">
+            Hero
+          </Link>
           <a href="#" className="text-gray-900 font-medium hover:text-gray-600">
             Treatments
           </a>

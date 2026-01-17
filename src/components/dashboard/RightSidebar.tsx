@@ -1,205 +1,97 @@
 "use client"
 
+import { ChevronLeft, MoreHorizontal, Edit3 } from "lucide-react"
+import ChatUI from "./ChatUI";
+
 export function RightSidebar() {
   return (
-    <aside className="w-96 bg-white p-6 space-y-6 overflow-y-auto shadow-sm">
-      {/* User Profile Card */}
-      <div className="relative rounded-3xl overflow-hidden h-80">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-800 via-teal-700 to-green-900"></div>
-
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-yellow-400 rounded-full blur-2xl"></div>
-          <div className="absolute top-20 right-0 w-40 h-40 bg-pink-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-20 w-36 h-36 bg-purple-500 rounded-full blur-2xl"></div>
-        </div>
-
-        {/* Menu button */}
-        <button className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors">
-          <svg
-            className="w-5 h-5 text-gray-700"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
-
-        <div className="relative z-10 p-6 h-full flex flex-col">
-          {/* User info */}
-          <div className="flex items-center gap-3 mb-auto">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full"></div>
-            <div>
-              <p className="text-white font-semibold text-lg">
-                Takehiro Tomiyasu
-              </p>
-              <p className="text-emerald-300 text-sm">Member premium</p>
-            </div>
-          </div>
-
-          {/* Adopt card */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 inline-block self-start">
-            <div className="flex gap-2 mb-3">
-              <span className="text-4xl">🐻</span>
-              <span className="text-4xl">🦝</span>
-            </div>
-            <button className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:from-orange-500 hover:to-orange-600 flex items-center gap-2 shadow-lg transition-all">
-              ADOPT ME
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z"
-                  clipRule="evenodd"
-                />
-                <path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z" />
-              </svg>
-            </button>
-          </div>
-        </div>
+    <aside style={{ backgroundImage: "url('/images/right_side.jpg')" }} className="w-96 h-full bg-cover bg-bottom bg-gradient-to-b from-teal-800 via-teal-700 to-teal-600 overflow-hidden shadow-sm relative flex flex-col">
+      {/* Gradient overlay - transparent at top, black at bottom */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 100%)' }}
+      />
+      
+      {/* Background cityscape image */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-72 bg-cover bg-bottom z-0"
+        
+      />
+      
+      {/* Decorative stars */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-8 left-8 w-1 h-1 bg-white/60 rounded-full" />
+        <div className="absolute top-12 left-20 w-0.5 h-0.5 bg-white/40 rounded-full" />
+        <div className="absolute top-6 right-16 w-1.5 h-1.5 bg-white/50 rounded-full" />
+        <div className="absolute top-16 right-8 w-0.5 h-0.5 bg-white/30 rounded-full" />
+        <div className="absolute top-20 left-12 w-0.5 h-0.5 bg-white/40 rounded-full" />
       </div>
 
-      {/* Calendar */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-semibold text-lg">January 2022</h3>
-          <div className="flex gap-1">
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full p-6">
+        {/* Header */}
+        {/* <div className="flex items-center justify-between mb-8">
+          <button className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+          <button className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-white" />
+          </button>
+        </div> */}
 
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-2 mb-3">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-            <div
-              key={day}
-              className="text-center text-xs text-gray-400 font-medium"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar dates */}
-        <div className="grid grid-cols-7 gap-2">
-          {[10, 11, 12, 13, 14, 15, 16].map((date) => (
-            <button
-              key={date}
-              className={`aspect-square rounded-xl flex items-center justify-center text-sm font-semibold transition-all ${date === 12
-                  ? "bg-blue-500 text-white shadow-lg scale-105"
-                  : "text-gray-400 hover:bg-white/5"
-                }`}
-            >
-              {date}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Upcoming Schedule */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white">
-        <h3 className="font-semibold text-lg mb-1">Upcoming schedule</h3>
-        <p className="text-sm text-gray-400 mb-5">
-          Wednesday, 12 January, 2022
-        </p>
-
-        <div className="space-y-3 mb-5">
-          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl backdrop-blur">
-            <div className="text-center min-w-[70px]">
-              <p className="text-sm font-medium text-gray-300">08:00 AM</p>
-            </div>
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                <path
-                  fillRule="evenodd"
-                  d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-white">
-                Health checkup
-              </p>
-              <p className="text-xs text-gray-400">Health adoption 1</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl backdrop-blur">
-            <div className="text-center min-w-[70px]">
-              <p className="text-sm font-medium text-gray-300">10:00 AM</p>
-            </div>
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                <path
-                  fillRule="evenodd"
-                  d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-white">
-                Health checkup
-              </p>
-              <p className="text-xs text-gray-400">Health adoption 2</p>
-            </div>
-          </div>
-        </div>
-
-        <button className="w-full bg-blue-500 text-white px-6 py-3.5 rounded-full font-semibold hover:bg-blue-600 flex items-center justify-center gap-2 shadow-lg transition-all">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-              clipRule="evenodd"
+        {/* Profile Section */}
+        <div className="flex flex-col items-center mb-6">
+          {/* Avatar */}
+          <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden mb-4">
+            <img 
+              src="/images/2.png" 
+              alt="Profile" 
+              className="w-full h-full object-cover bg-white"
             />
-          </svg>
-          Book now
-        </button>
-      </div>
+          </div>
+          
+          {/* Name */}
+          <h2 className="text-2xl font-bold text-white mb-1">Akash Yadav</h2>
+          <p className="text-white text-sm mb-4">Software Engineer</p>
+          
+          
+          {/* Edit Profile Button */}
+          {/* <button className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full text-gray-700 font-medium hover:bg-gray-100 transition-colors shadow-lg">
+            <Edit3 className="w-4 h-4" />
+            Edit Profile
+          </button> */}
+        </div>
+
+        {/* Working Hours Section */}
+        {/* <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 mb-6">
+          <h3 className="text-white/80 text-sm font-medium text-center mb-4">Working hours:</h3>
+          <div className="flex gap-3"> */}
+            {/* Work Start */}
+            {/* <div className="flex-1 bg-white rounded-xl p-4 text-center">
+              <p className="text-gray-500 text-xs mb-1">Work Start</p>
+              <p className="text-gray-900 text-lg font-bold">09:00 am</p> */}
+            </div>
+            {/* Work End */}
+            {/* <div className="flex-1 bg-white rounded-xl p-4 text-center">
+              <p className="text-gray-500 text-xs mb-1">Work End</p>
+              <p className="text-gray-900 text-lg font-bold">05:00 pm</p>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Spacer to push location to bottom */}
+        {/* <div className="flex-1" /> */}
+
+        {/* Location Section */}
+        {/* <div className="text-center mb-4 relative z-10">
+          <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">Sukabumi City</h2>
+          <div className="flex items-center justify-center gap-2 text-white/80">
+            <span className="text-sm">Sukabumi, Indonesia</span>
+            <span className="text-white/50">•</span>
+            <span className="text-sm">GMT+7</span>
+          </div>
+        </div> */}
+      <ChatUI />
     </aside>
   );
 }
