@@ -1,6 +1,10 @@
+import { Orb } from "@/components/ui/orb";
 import Image from "next/image";
+import { VoiceButton } from "@/components/ui/voice-button"
 
 export default function ServicesPage() {
+    const [state, setState] = useState<"idle" | "recording" | "processing">("idle")
+ 
   return (
     <div className="flex h-screen bg-[#FAFAFA]">
       {/* Left Sidebar */}
@@ -32,7 +36,7 @@ export default function ServicesPage() {
 
         {/* Navigation Icons */}
         <div className="flex-1 flex flex-col items-center space-y-4 pt-4">
-          <button className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+          <button className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -199,41 +203,50 @@ export default function ServicesPage() {
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* Featured Pet Card */}
-          <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-500 rounded-3xl p-8 relative overflow-hidden">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl text-center font-semibold text-white mb-6 leading-tight">
-                  What are you feeling today?
-                </h2>
-                {/* <button className="bg-white text-gray-900 px-6 py-3 rounded-full font-medium hover:bg-gray-50 inline-flex items-center gap-2 shadow-sm">
-                  More details
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button> */}
+          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-[#B8D849] via-[#A8C939] to-[#98BA29] shadow-xl">
+            <div className="bg-gradient-to-b from-[#A8C939] to-[#8BA829] rounded-[1.7rem] p-6 flex flex-col h-full">
+              {/* Header Tag */}
+              {/* <div className="mb-3">
+                <span className="text-xs font-medium text-gray-700 bg-white/40 px-3 py-1.5 rounded-full">
+                  New Instagram Reels Creator
+                </span>
+              </div> */}
+
+              {/* Image */}
+              <div className="mb-4 rounded-2xl overflow-hidden">
+                <Image
+                  src="/images/nature.jpg"
+                  alt="Imaginary Escape"
+                  width={400}
+                  height={250}
+                  className="w-full h-48 object-cover"
+                />
               </div>
 
-              {/* Illustration */}
-              {/* <div className="absolute right-0 top-0 w-96 h-full">
-                <div className="relative w-full h-full"> */}
-                  {/* Nature scene elements */}
-                  {/* <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-green-700 to-transparent opacity-30"></div>
-                  <div className="absolute top-8 left-8 w-12 h-20 bg-green-800 opacity-20 rounded-t-full"></div>
-                  <div className="absolute top-12 right-16 w-16 h-16 bg-purple-400 opacity-30 rounded-full"></div>
-                  <div className="absolute top-20 right-32 w-20 h-20 bg-white opacity-20 rounded-full"></div>
-                  <div className="absolute bottom-16 left-12 w-24 h-3 bg-green-700 opacity-25 rounded-full"></div>
-                </div>
-              </div> */}
+              {/* Title */}
+              <div className="flex-1 mb-4 text-center">
+                <h2 className="text-3xl font-bold text-white mb-1">
+                  What is in your mind?
+                </h2>
+                <p className="text-sm text-white/90">
+                  Let's take a deep breath and relax your mind.
+                </p>
+              </div>
+
+              {/* Generate Button */}
+              {/* <button className="w-full bg-gradient-to-r from-[#E8F5A8] to-[#D8E598] text-gray-800 py-3.5 rounded-full font-semibold text-base hover:from-[#F0F7B8] hover:to-[#E0ED98] transition-all shadow-md">
+                Generate Image
+              </button> */}
+              <VoiceButton
+  state={state}
+  onPress={() => {
+    if (state === "idle") {
+      setState("recording")
+    } else {
+      setState("processing")
+    }
+  }}
+/>
             </div>
           </div>
 
