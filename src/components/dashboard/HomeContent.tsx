@@ -11,9 +11,9 @@ export function HomeContent() {
   return (
     <>
       <div className="grid grid-cols-2 gap-6 mb-6 auto-rows-[380px] ">
-        <VoiceDumpCard />
         {/* Featured Card */}
-        <FeatureCard />
+        <VoiceDumpCard />
+
 
         {/* Schedule Details with Calendar Picker */}
         <ScheduleWithCalendar />
