@@ -9,6 +9,8 @@ export async function processVoiceDump(voiceDumpId: string) {
   console.log('🧠 [SERVER] processVoiceDump started for:', voiceDumpId)
 
   const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  console.log('🔑 [SERVER] Action Session Token:', session?.access_token ? session.access_token.substring(0, 15) + '...' : 'No session found')
   
   // 1. Fetch the voice dump
   const { data: voiceDump, error: dumpError } = await supabase

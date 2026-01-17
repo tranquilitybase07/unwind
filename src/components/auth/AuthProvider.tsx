@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 [CLIENT] Initial Session Token:', session?.access_token)
       setUser(session?.user ?? null)
       setLoading(false)
     })
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 [CLIENT] Auth Change Token:', session?.access_token)
       setUser(session?.user ?? null)
     })
 
