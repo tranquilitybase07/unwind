@@ -1,11 +1,30 @@
 "use client"
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+
 export function DashboardHeader() {
+  const { user, loading } = useAuth();
+  const supabase = createClient();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/auth/login";
+  };
+
   return (
     <div className="flex items-center justify-between mb-8">
       <div>
         <h1 className="text-3xl font-semibold text-gray-900">
-          Welcome Back, Akash
+          Welcome Back{mounted && user?.email ? `, ${user.email.split("@")[0]}` : ""}
         </h1>
         <p className="text-gray-500 mt-1">Let&apos;s check your progress</p>
       </div>
@@ -21,6 +40,17 @@ export function DashboardHeader() {
             <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
           </svg>
         </button>
+
+        {/* Sign Out Button */}
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );
