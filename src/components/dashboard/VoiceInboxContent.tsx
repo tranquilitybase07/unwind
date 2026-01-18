@@ -58,7 +58,14 @@ function generateWaveform(durationSeconds: number | null): number[] {
 
 // Format date for display
 function formatDateLabel(dateStr: string): string {
-  const date = parseISO(dateStr)
+  console.log('📅 formatDateLabel - Raw dateStr:', dateStr)
+  // Supabase returns timestamps without 'Z', so JS interprets as local time
+  // Force it to be UTC by adding 'Z' if not present
+  const utcDateStr = dateStr.includes('Z') ? dateStr : dateStr.replace(' ', 'T') + 'Z'
+  const date = new Date(utcDateStr)
+  console.log('📅 formatDateLabel - UTC string:', utcDateStr)
+  console.log('📅 formatDateLabel - Parsed date:', date.toString())
+  console.log('📅 formatDateLabel - Local time:', date.toLocaleString())
   if (isToday(date)) return "TODAY"
   if (isYesterday(date)) return "YESTERDAY"
   return format(date, "MMM d").toUpperCase()
@@ -66,14 +73,22 @@ function formatDateLabel(dateStr: string): string {
 
 // Format time for display
 function formatTimeLabel(dateStr: string): string {
-  const date = parseISO(dateStr)
+  console.log('⏰ formatTimeLabel - Raw dateStr:', dateStr)
+  // Force UTC interpretation by adding 'Z' if not present
+  const utcDateStr = dateStr.includes('Z') ? dateStr : dateStr.replace(' ', 'T') + 'Z'
+  const date = new Date(utcDateStr)
+  console.log('⏰ formatTimeLabel - UTC string:', utcDateStr)
+  console.log('⏰ formatTimeLabel - Parsed date:', date.toString())
+  console.log('⏰ formatTimeLabel - Local time:', date.toLocaleString())
   return format(date, "h:mm a")
 }
 
 // Generate title from transcription
 function generateTitle(transcription: string, createdAt: string): string {
-  const date = parseISO(createdAt)
-  const hour = date.getHours()
+  // Force UTC interpretation by adding 'Z' if not present
+  const utcDateStr = createdAt.includes('Z') ? createdAt : createdAt.replace(' ', 'T') + 'Z'
+  const date = new Date(utcDateStr)
+  const hour = date.getHours() // Gets the hour in local timezone after UTC conversion
 
   let timeOfDay = "Voice Dump"
   if (hour >= 5 && hour < 12) timeOfDay = "Morning Thoughts"
@@ -361,100 +376,90 @@ export function VoiceInboxContent() {
 
       {/* Transcription Details Panel */}
       {selectedRecording && selectedRecording.transcription && (
-        <div className="w-96 border-l mt-8 border-gray-200 bg-white p-6 h-fit scrollbar-hidden hover:scrollbar-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Transcription Details</h2>
-            <button 
-              onClick={() => setSelectedRecording(null)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="w-96 border-l border-gray-200 bg-white flex flex-col h-full overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Transcription Details</h2>
+              <button 
+                onClick={() => setSelectedRecording(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Full AI Transcription */}
-          <div className="mb-6">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
-              Full AI Transcription
-            </p>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              "{selectedRecording.transcription}"
-            </p>
-          </div>
-
-          {/* Categorized Items */}
-          {selectedRecording.categorizedItems && selectedRecording.categorizedItems.length > 0 && (
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-hidden hover:scrollbar-auto">
+            {/* Full AI Transcription */}
             <div className="mb-6">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
-                Categorized Items
+                Full AI Transcription
               </p>
-              <div className="space-y-3">
-                {selectedRecording.categorizedItems.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      item.type === "task" ? "bg-primary text-white" :
-                      item.type === "idea" ? "bg-yellow-100 text-yellow-600" :
-                      item.type === "worry" ? "bg-orange-100 text-orange-600" :
-                      item.type === "errand" ? "bg-blue-100 text-blue-600" :
-                      item.type === "health" ? "bg-red-100 text-red-600" :
-                      item.type === "relationship" ? "bg-pink-100 text-pink-600" :
-                      "bg-purple-100 text-purple-600"
-                    }`}>
-                      {item.type === "task" && <Check className="w-3 h-3" />}
-                      {item.type === "idea" && <Lightbulb className="w-3 h-3" />}
-                      {item.type === "worry" && <AlertCircle className="w-3 h-3" />}
-                      {item.type === "errand" && <ShoppingCart className="w-3 h-3" />}
-                      {item.type === "health" && <Heart className="w-3 h-3" />}
-                      {item.type === "relationship" && <Users className="w-3 h-3" />}
-                      {item.type === "recurring" && <Calendar className="w-3 h-3" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-500 uppercase mb-0.5">
-                        {item.categoryName}
-                      </p>
-                      <p className="text-sm text-gray-800">{item.text}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.type === "task" && (
+              <p className="text-sm text-gray-700 leading-relaxed">
+                "{selectedRecording.transcription}"
+              </p>
+            </div>
+
+            {/* Categorized Items */}
+            {selectedRecording.categorizedItems && selectedRecording.categorizedItems.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+                  Categorized Items
+                </p>
+                <div className="space-y-3">
+                  {selectedRecording.categorizedItems.map((item) => (
+                    <div key={item.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        item.type === "task" ? "bg-primary text-white" :
+                        item.type === "idea" ? "bg-yellow-100 text-yellow-600" :
+                        item.type === "worry" ? "bg-orange-100 text-orange-600" :
+                        item.type === "errand" ? "bg-blue-100 text-blue-600" :
+                        item.type === "health" ? "bg-red-100 text-red-600" :
+                        item.type === "relationship" ? "bg-pink-100 text-pink-600" :
+                        "bg-purple-100 text-purple-600"
+                      }`}>
+                        {item.type === "task" && <Check className="w-3 h-3" />}
+                        {item.type === "idea" && <Lightbulb className="w-3 h-3" />}
+                        {item.type === "worry" && <AlertCircle className="w-3 h-3" />}
+                        {item.type === "errand" && <ShoppingCart className="w-3 h-3" />}
+                        {item.type === "health" && <Heart className="w-3 h-3" />}
+                        {item.type === "relationship" && <Users className="w-3 h-3" />}
+                        {item.type === "recurring" && <Calendar className="w-3 h-3" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-0.5">
+                          {item.categoryName}
+                        </p>
+                        <p className="text-sm text-gray-800">{item.text}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {item.type === "task" && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleMoveToToday(item.id)
+                            }}
+                            className="cursor-pointer px-2 py-1 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10"
+                          >
+                            MOVE TO TODAY
+                          </button>
+                        )}
                         <button 
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleMoveToToday(item.id)
+                            handleOpenEdit(item)
                           }}
-                          className="cursor-pointer px-2 py-1 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10"
+                          className="cursor-pointer text-gray-400 hover:text-gray-600"
                         >
-                          MOVE TO TODAY
+                          <Edit className="w-4 h-4" />
                         </button>
-                      )}
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleOpenEdit(item)
-                        }}
-                        className="cursor-pointer text-gray-400 hover:text-gray-600"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          {/* <div className="space-y-3 mt-8">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Re-categorize All
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors">
-              <Calendar className="w-4 h-4" />
-              Schedule Selected Tasks
-            </button>
-          </div> */}
+            )}
+          </div>
         </div>
       )}
     </div>
