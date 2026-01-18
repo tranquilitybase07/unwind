@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Search, Check, Lightbulb, ShoppingBag, Heart, AlertCircle, RotateCcw } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Plus, Search, Check, Lightbulb, ShoppingBag, Heart, AlertCircle, RotateCcw, Loader2, Users } from "lucide-react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { HealthIcon } from "@hugeicons/core-free-icons"
+import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/auth/AuthProvider"
 
 interface Category {
-  id: number
+  id: string
   title: string
   itemCount: number
   icon: React.ReactNode
@@ -15,74 +18,152 @@ interface Category {
   tags: string[]
 }
 
-const categories: Category[] = [
-  {
-    id: 1,
-    title: "Tasks",
-    itemCount: 14,
-    icon: <Check className="w-5 h-5 text-white" />,
-    bgColor: "bg-accent",
-    iconBgColor: "bg-primary",
-    tags: ["#work", "#deadline"]
-  },
-  {
-    id: 2,
-    title: "Ideas",
-    itemCount: 28,
-    icon: <Lightbulb className="w-5 h-5 text-white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-amber-500",
-    tags: ["#creative", "#future"]
-  },
-  {
-    id: 3,
-    title: "Errands",
-    itemCount: 9,
-    icon: <ShoppingBag className="w-5 h-5 text-white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-rose-500",
-    tags: ["#grocery"]
-  },
-  {
-    id: 4,
-    title: "Health",
-    itemCount: 12,
-    icon: <HugeiconsIcon icon={HealthIcon} size={20} color="white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-primary",
-    tags: ["#meditation", "#sleep"]
-  },
-  {
-    id: 5,
-    title: "Relationships",
-    itemCount: 7,
-    icon: <Heart className="w-5 h-5 text-white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-rose-400",
-    tags: ["#family"]
-  },
-  {
-    id: 6,
-    title: "Worries Vault",
-    itemCount: 42,
-    icon: <AlertCircle className="w-5 h-5 text-white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-secondary-foreground",
-    tags: ["#anxiety", "#spiral"]
-  },
-  {
-    id: 7,
-    title: "Recurring",
-    itemCount: 5,
-    icon: <RotateCcw className="w-5 h-5 text-white" />,
-    bgColor: "bg-gray-800",
-    iconBgColor: "bg-gray-600",
-    tags: ["#routine"]
-  },
-]
+// Icon mapping for categories
+const categoryIconMap: Record<string, { icon: React.ReactNode; color: string }> = {
+  "Tasks": { icon: <Check className="w-5 h-5 text-white" />, color: "bg-primary" },
+  "Ideas": { icon: <Lightbulb className="w-5 h-5 text-white" />, color: "bg-amber-500" },
+  "Errands": { icon: <ShoppingBag className="w-5 h-5 text-white" />, color: "bg-rose-500" },
+  "Health": { icon: <HugeiconsIcon icon={HealthIcon} size={20} color="white" />, color: "bg-teal-500" },
+  "Relationships": { icon: <Users className="w-5 h-5 text-white" />, color: "bg-rose-400" },
+  "Worries Vault": { icon: <AlertCircle className="w-5 h-5 text-white" />, color: "bg-blue-500" },
+  "Recurring": { icon: <RotateCcw className="w-5 h-5 text-white" />, color: "bg-gray-600" },
+}
 
 export function CategoryContent() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [categories, setCategories] = useState<Category[]>([])
+  const [allCategories, setAllCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const supabase = createClient()
+
+  // Fetch categories and item counts
+  useEffect(() => {
+    async function fetchCategories() {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('display_order', { ascending: true })
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError)
+        setLoading(false)
+        return
+      }
+
+      // For each category, count items and get popular tags
+      const categoriesWithCounts = await Promise.all(
+        (categoriesData || []).map(async (category) => {
+          // Count items in this category
+          const { count } = await supabase
+            .from('items')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('category_id', category.id)
+            .neq('status', 'completed')
+
+          // Get top 2-3 tags for this category
+          const { data: itemsWithTags } = await supabase
+            .from('items')
+            .select('custom_tags')
+            .eq('user_id', user.id)
+            .eq('category_id', category.id)
+            .neq('status', 'completed')
+            .not('custom_tags', 'is', null)
+            .limit(10)
+
+          // Extract and count tags
+          const tagCounts: Record<string, number> = {}
+          itemsWithTags?.forEach((item) => {
+            const tags = item.custom_tags as string[] || []
+            tags.forEach((tag) => {
+              tagCounts[tag] = (tagCounts[tag] || 0) + 1
+            })
+          })
+
+          // Get top 2 tags
+          const topTags = Object.entries(tagCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 2)
+            .map(([tag]) => `#${tag}`)
+
+          const iconConfig = categoryIconMap[category.name] || categoryIconMap["Tasks"]
+
+          return {
+            id: category.id,
+            title: category.name,
+            itemCount: count || 0,
+            icon: iconConfig.icon,
+            bgColor: "bg-gray-800",
+            iconBgColor: iconConfig.color,
+            tags: topTags.length > 0 ? topTags : [`#${category.name.toLowerCase()}`]
+          }
+        })
+      )
+
+      setAllCategories(categoriesWithCounts)
+      setCategories(categoriesWithCounts)
+      setLoading(false)
+    }
+
+    fetchCategories()
+  }, [user, supabase])
+
+  // Filter categories when search query changes
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setCategories(allCategories)
+      return
+    }
+
+    async function searchByTags() {
+      if (!user) return
+
+      const searchTags = searchQuery
+        .toLowerCase()
+        .split(/[\s,]+/)
+        .map(tag => tag.replace(/^#/, '').trim())
+        .filter(tag => tag.length > 0)
+
+      if (searchTags.length === 0) {
+        setCategories(allCategories)
+        return
+      }
+
+      // Search for items with matching tags
+      const categoriesWithMatchingItems = await Promise.all(
+        allCategories.map(async (category) => {
+          const { count } = await supabase
+            .from('items')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('category_id', category.id)
+            .neq('status', 'completed')
+            .overlaps('custom_tags', searchTags)
+
+          return {
+            ...category,
+            itemCount: count || 0
+          }
+        })
+      )
+
+      // Only show categories with matching items
+      const filteredCategories = categoriesWithMatchingItems.filter(cat => cat.itemCount > 0)
+      setCategories(filteredCategories)
+    }
+
+    searchByTags()
+  }, [searchQuery, allCategories, user, supabase])
 
   return (
     <div className="flex-1 mt-8 h-full overflow-y-auto scrollbar-hidden hover:scrollbar-auto px-8 py-6">
@@ -111,58 +192,72 @@ export function CategoryContent() {
 
       {/* Search Bar */}
       <div className="relative mb-8">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
           type="text"
           placeholder="Search by tags (e.g., #spiral, #clarity)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary"
+          className="w-full pl-12 pr-4 py-3 bg-white border-2 border-primary rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
       {/* Category Cards Grid */}
-      <div className="grid grid-cols-4 gap-4">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-gray-800 rounded-2xl p-5 border border-gray-700 hover:border-primary/50 transition-all cursor-pointer group"
-          >
-            {/* Icon and Count */}
-            <div className="flex items-start justify-between mb-4">
-              <div className={`w-10 h-10 rounded-xl ${category.iconBgColor} flex items-center justify-center`}>
-                {category.icon}
-              </div>
-              <span className="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded-full">
-                {category.itemCount} ITEMS
-              </span>
-            </div>
-
-            {/* Title */}
-            <h3 className="text-lg font-semibold text-white mb-3">{category.title}</h3>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {category.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-gray-700/50 text-gray-400 text-xs rounded-lg"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* New Space Card */}
-        <div className="bg-gray-800/10 rounded-2xl p-5 border border-dashed border-gray-600 hover:border-primary/50 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[180px]">
-          <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center mb-3">
-            <Plus className="w-5 h-5 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-400">New Space</h3>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <Loader2 className="w-8 h-8 mb-3 text-gray-300 animate-spin" />
+          <p className="text-sm font-medium">Loading categories...</p>
         </div>
-      </div>
+      ) : categories.length === 0 && searchQuery.trim() ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <Search className="w-12 h-12 mb-3 text-gray-300" />
+          <p className="text-sm font-medium">No categories found matching "{searchQuery}"</p>
+          <p className="text-xs">Try different tags or clear the search</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-4">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              onClick={() => router.push(`/dashboard/category/${category.id}`)}
+              className="bg-gray-800 rounded-2xl p-5 border border-gray-700 hover:border-primary/50 transition-all cursor-pointer group"
+            >
+              {/* Icon and Count */}
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-10 h-10 rounded-xl ${category.iconBgColor} flex items-center justify-center`}>
+                  {category.icon}
+                </div>
+                <span className="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded-full">
+                  {category.itemCount} ITEMS
+                </span>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-semibold text-white mb-3">{category.title}</h3>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2">
+                {category.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-gray-700/50 text-gray-400 text-xs rounded-lg"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* New Space Card */}
+          <div className="bg-gray-800/10 rounded-2xl p-5 border border-dashed border-gray-600 hover:border-primary/50 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[180px]">
+            <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center mb-3">
+              <Plus className="w-5 h-5 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-400">New Space</h3>
+          </div>
+        </div>
+      )}
 
       {/* Floating Action Button */}
       {/* <div className="fixed bottom-6 right-96 mr-6">

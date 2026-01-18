@@ -1,57 +1,163 @@
 "use client"
 
-import { useState } from "react"
-import { Check, ChevronRight, Edit, MoreVertical, Mic, X, Calendar, Lightbulb, AlertCircle} from "lucide-react"
+import { useState, useEffect } from "react"
+import { Check, ChevronRight, Edit, MoreVertical, Mic, X, Calendar, Lightbulb, AlertCircle, Loader2, ShoppingCart, Heart, Users } from "lucide-react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Mic01FreeIcons, Play } from "@hugeicons/core-free-icons"
+import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/auth/AuthProvider"
+import { format, isToday, isYesterday, parseISO } from "date-fns"
+
+interface CategorizedItem {
+  id: string
+  type: "task" | "idea" | "worry" | "errand" | "health" | "relationship" | "recurring"
+  text: string
+  categoryName: string
+}
 
 interface VoiceRecording {
-  id: number
+  id: string
   title: string
   date: string
   time: string
-  status: "organized" | "processing"
-  waveform?: number[]
-  transcription?: string
-  categorizedItems?: {
-    type: "task" | "idea" | "worry"
-    text: string
-  }[]
+  status: "processed" | "pending" | "failed"
+  waveform: number[]
+  transcription: string
+  categorizedItems: CategorizedItem[]
 }
 
-const voiceRecordings: VoiceRecording[] = [
-  {
-    id: 1,
-    title: "Morning Coffee Clarity",
-    date: "TODAY",
-    time: "8:42 AM",
-    status: "organized",
-    waveform: [20, 35, 45, 30, 55, 40, 60, 35, 50, 45, 30, 55, 40, 25, 45, 35, 50, 30, 40, 55],
-    transcription: "I think I finally figured out the structure for the proposal. It's not about the features, it's about the mental load we're reducing for users. Also need to remember to pick up eggs on the way home. Oh, and I've been feeling a bit anxious about the meeting with Mark on Friday, but I should probably just prepare the slides and it'll be fine.",
-    categorizedItems: [
-      { type: "task", text: "Restructure proposal by value prop" },
-      { type: "idea", text: "Focus on 'mental load' reduction" },
-      { type: "worry", text: "Meeting with Mark on Friday" },
-    ]
-  },
-  {
-    id: 2,
-    title: "Late Night Worry Dump",
-    date: "YESTERDAY",
-    time: "11:15 PM",
-    status: "organized",
-    waveform: [20, 35, 45, 30, 55, 40, 60, 35, 50, 45, 30, 55, 40, 25, 45, 35, 50, 30, 40, 55],
-    transcription: "the proposal. It's not about the features, it's about the mental load we're reducing for users. Also need to remember to pick up eggs on the way home. Oh, and I've been feeling a bit anxious about the meeting with Mark on Friday, but I should probably just prepare the slides and it'll be fine.",
-    categorizedItems: [
-      { type: "task", text: "Restructure proposal by value prop" },
-      { type: "idea", text: "Focus on 'mental load' reduction" },
-      { type: "worry", text: "Meeting with Mark on Friday" },
-    ]
-  }
-]
+// Map category names to item types
+const categoryToType: Record<string, CategorizedItem["type"]> = {
+  "Tasks": "task",
+  "Ideas": "idea",
+  "Worries Vault": "worry",
+  "Errands": "errand",
+  "Health": "health",
+  "Relationships": "relationship",
+  "Recurring": "recurring",
+}
+
+// Generate random waveform visualization
+function generateWaveform(durationSeconds: number | null): number[] {
+  // Create bars based on duration (more bars for longer audio)
+  const numBars = durationSeconds
+    ? Math.min(Math.max(Math.floor(durationSeconds / 5), 15), 35)
+    : 20
+
+  // Generate random heights for each bar (20-60% range for visual variety)
+  return Array.from({ length: numBars }, () => {
+    return Math.floor(Math.random() * 40) + 20
+  })
+}
+
+// Format date for display
+function formatDateLabel(dateStr: string): string {
+  const date = parseISO(dateStr)
+  if (isToday(date)) return "TODAY"
+  if (isYesterday(date)) return "YESTERDAY"
+  return format(date, "MMM d").toUpperCase()
+}
+
+// Format time for display
+function formatTimeLabel(dateStr: string): string {
+  const date = parseISO(dateStr)
+  return format(date, "h:mm a")
+}
+
+// Generate title from transcription
+function generateTitle(transcription: string, createdAt: string): string {
+  const date = parseISO(createdAt)
+  const hour = date.getHours()
+
+  let timeOfDay = "Voice Dump"
+  if (hour >= 5 && hour < 12) timeOfDay = "Morning Thoughts"
+  else if (hour >= 12 && hour < 17) timeOfDay = "Afternoon Clarity"
+  else if (hour >= 17 && hour < 21) timeOfDay = "Evening Reflection"
+  else timeOfDay = "Late Night Dump"
+
+  return timeOfDay
+}
 
 export function VoiceInboxContent() {
-  const [selectedRecording, setSelectedRecording] = useState<VoiceRecording | null>(voiceRecordings[0])
+  const [voiceRecordings, setVoiceRecordings] = useState<VoiceRecording[]>([])
+  const [selectedRecording, setSelectedRecording] = useState<VoiceRecording | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const supabase = createClient()
+
+  // Fetch voice dumps and their categorized items
+  useEffect(() => {
+    async function fetchVoiceDumps() {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      // Fetch voice dumps
+      const { data: dumps, error: dumpsError } = await supabase
+        .from('voice_dumps')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (dumpsError) {
+        console.error('Error fetching voice dumps:', dumpsError)
+        setLoading(false)
+        return
+      }
+
+      // Fetch items for each voice dump with their categories
+      const recordingsWithItems: VoiceRecording[] = await Promise.all(
+        (dumps || []).map(async (dump) => {
+          const { data: items } = await supabase
+            .from('items')
+            .select(`
+              id,
+              title,
+              category_id,
+              categories (
+                name
+              )
+            `)
+            .eq('voice_dump_id', dump.id)
+
+          const categorizedItems: CategorizedItem[] = (items || []).map((item) => {
+            const categoryName = (item.categories as { name: string } | null)?.name || 'Tasks'
+            return {
+              id: item.id,
+              type: categoryToType[categoryName] || 'task',
+              text: item.title,
+              categoryName,
+            }
+          })
+
+          // Map database status values directly
+          const status = (dump.processing_status || 'pending') as "processed" | "pending" | "failed"
+
+          return {
+            id: dump.id,
+            title: generateTitle(dump.transcription, dump.created_at!),
+            date: formatDateLabel(dump.created_at!),
+            time: formatTimeLabel(dump.created_at!),
+            status,
+            waveform: generateWaveform(dump.audio_duration_seconds),
+            transcription: dump.transcription,
+            categorizedItems,
+          }
+        })
+      )
+
+      setVoiceRecordings(recordingsWithItems)
+      if (recordingsWithItems.length > 0) {
+        setSelectedRecording(recordingsWithItems[0])
+      }
+      setLoading(false)
+    }
+
+    fetchVoiceDumps()
+  }, [user, supabase])
 
   return (
     <div className="flex mt-8 flex-1 h-full overflow-hidden">
@@ -71,67 +177,77 @@ export function VoiceInboxContent() {
 
         {/* Voice Recordings List */}
         <div className="space-y-4">
-          {voiceRecordings.map((recording) => (
-            <div
-              key={recording.id}
-              onClick={() => setSelectedRecording(recording)}
-              className={`p-4 rounded-2xl cursor-pointer transition-all ${
-                selectedRecording?.id === recording.id
-                  ? "bg-primary/10 border-2 border-primary"
-                  : "bg-white border border-gray-200 hover:border-primary/50"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {/* Play Button */}
-                <button className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0">
-                  <HugeiconsIcon icon={Play} />
-                </button>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <Loader2 className="w-8 h-8 mb-3 text-gray-300 animate-spin" />
+              <p className="text-sm font-medium">Loading voice dumps...</p>
+            </div>
+          ) : voiceRecordings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <Mic className="w-12 h-12 mb-3 text-gray-300" />
+              <p className="text-sm font-medium">No voice dumps yet</p>
+              <p className="text-xs">Start your first voice dump to see it here</p>
+            </div>
+          ) : (
+            voiceRecordings.map((recording) => (
+              <div
+                key={recording.id}
+                onClick={() => setSelectedRecording(recording)}
+                className={`p-4 rounded-2xl cursor-pointer transition-all ${
+                  selectedRecording?.id === recording.id
+                    ? "bg-primary/10 border-2 border-primary"
+                    : "bg-white border border-gray-200 hover:border-primary/50"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Play Button */}
+                  <button className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0">
+                    <HugeiconsIcon icon={Play} />
+                  </button>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-gray-900 truncate">{recording.title}</h3>
-                    <div className="flex items-center gap-2">
-                      {recording.status === "organized" ? (
-                        <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
-                          ORGANIZED
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground rounded-full">
-                          +PROCESSING
-                        </span>
-                      )}
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-gray-900 truncate">{recording.title}</h3>
+                      <div className="flex items-center gap-2">
+                        {recording.status === "processed" ? (
+                          <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                            PROCESSED
+                          </span>
+                        ) : recording.status === "failed" ? (
+                          <span className="px-3 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                            FAILED
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
+                            PENDING
+                          </span>
+                        )}
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {recording.date} {recording.time && `• ${recording.time}`}
+                    </p>
+
+                    {/* Waveform visualization */}
+                    {recording.waveform && (
+                      <div className="flex items-end gap-0.5 h-8">
+                        {recording.waveform.map((height, index) => (
+                          <div
+                            key={index}
+                            className="w-1 bg-primary rounded-full"
+                            style={{ height: `${height}%` }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">
-                    {recording.date} {recording.time && `• ${recording.time}`}
-                  </p>
-                  
-                  {/* Waveform visualization */}
-                  {recording.waveform && (
-                    <div className="flex items-end gap-0.5 h-8">
-                      {recording.waveform.map((height, index) => (
-                        <div
-                          key={index}
-                          className="w-1 bg-primary rounded-full"
-                          style={{ height: `${height}%` }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Processing indicator */}
-                  {recording.status === "processing" && (
-                    <div className="w-1/3 h-1 bg-gray-300 rounded-full overflow-hidden">
-                      <div className="h-full w-1/2 bg-primary rounded-full animate-pulse" />
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -159,26 +275,34 @@ export function VoiceInboxContent() {
           </div>
 
           {/* Categorized Items */}
-          {selectedRecording.categorizedItems && (
+          {selectedRecording.categorizedItems && selectedRecording.categorizedItems.length > 0 && (
             <div className="mb-6">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
                 Categorized Items
               </p>
               <div className="space-y-3">
-                {selectedRecording.categorizedItems.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+                {selectedRecording.categorizedItems.map((item) => (
+                  <div key={item.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                       item.type === "task" ? "bg-primary text-white" :
-                      item.type === "idea" ? "bg-secondary text-secondary-foreground" :
-                      "bg-accent text-primary"
+                      item.type === "idea" ? "bg-yellow-100 text-yellow-600" :
+                      item.type === "worry" ? "bg-orange-100 text-orange-600" :
+                      item.type === "errand" ? "bg-blue-100 text-blue-600" :
+                      item.type === "health" ? "bg-red-100 text-red-600" :
+                      item.type === "relationship" ? "bg-pink-100 text-pink-600" :
+                      "bg-purple-100 text-purple-600"
                     }`}>
                       {item.type === "task" && <Check className="w-3 h-3" />}
                       {item.type === "idea" && <Lightbulb className="w-3 h-3" />}
                       {item.type === "worry" && <AlertCircle className="w-3 h-3" />}
+                      {item.type === "errand" && <ShoppingCart className="w-3 h-3" />}
+                      {item.type === "health" && <Heart className="w-3 h-3" />}
+                      {item.type === "relationship" && <Users className="w-3 h-3" />}
+                      {item.type === "recurring" && <Calendar className="w-3 h-3" />}
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium text-gray-500 uppercase mb-0.5">
-                        {item.type}
+                        {item.categoryName}
                       </p>
                       <p className="text-sm text-gray-800">{item.text}</p>
                     </div>

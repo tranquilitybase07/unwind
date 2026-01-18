@@ -1,27 +1,116 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
-import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, getYear, getMonth, setMonth, setYear } from "date-fns"
-import { MedicalFileFreeIcons } from "@hugeicons/core-free-icons"
+import { useState, useEffect } from "react"
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, getYear, getMonth, setMonth, setYear, parseISO } from "date-fns"
+import { MedicalFileFreeIcons, Task01FreeIcons, Idea01FreeIcons, ShoppingBag01FreeIcons, UserMultipleFreeIcons, SadDizzyFreeIcons, RepeatFreeIcons, HealthIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/auth/AuthProvider"
 
-// Sample schedule data - in real app, this would come from a database/API
-const scheduleData = [
-  { id: 1, date: new Date(2026, 0, 17), time: "08:00 AM", title: "Health checkup", status: "Upcoming", color: "primary", borderColor: "primary",bgColor: "accent", icon: MedicalFileFreeIcons },
-  { id: 2, date: new Date(2026, 0, 17), time: "10:00 AM", title: "Create Landing Page", status: "Working On", color: "secondary-foreground", borderColor: "secondary-foreground",bgColor: "secondary", icon: MedicalFileFreeIcons },
-  { id: 3, date: new Date(2026, 0, 18), time: "09:00 AM", title: "Team Meeting", status: "Upcoming", color: "primary", borderColor: "primary",bgColor: "accent", icon: MedicalFileFreeIcons },
-  { id: 4, date: new Date(2026, 0, 20), time: "02:00 PM", title: "Doctor Appointment", status: "Upcoming", color: "secondary-foreground", borderColor: "secondary-foreground",bgColor: "secondary", icon: MedicalFileFreeIcons },
-  { id: 5, date: new Date(2026, 0, 22), time: "11:00 AM", title: "Project Review", status: "Working On", color: "primary", borderColor: "primary",bgColor: "accent", icon: MedicalFileFreeIcons },
-]
+// Map category names to icons
+const categoryIcons: Record<string, typeof MedicalFileFreeIcons> = {
+  "Tasks": Task01FreeIcons,
+  "Ideas": Idea01FreeIcons,
+  "Errands": ShoppingBag01FreeIcons,
+  "Health": HealthIcon,
+  "Relationships": UserMultipleFreeIcons,
+  "Worries Vault": SadDizzyFreeIcons,
+  "Recurring": RepeatFreeIcons,
+}
+
+type ScheduleItem = {
+  id: string
+  date: Date
+  time: string
+  title: string
+  status: string
+  color: string
+  borderColor: string
+  bgColor: string
+  icon: typeof MedicalFileFreeIcons
+}
 
 const ScheduleWithCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [showCalendar, setShowCalendar] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const supabase = createClient()
+
+  // Fetch items from Supabase
+  useEffect(() => {
+    async function fetchSchedule() {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      const { data: items, error } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          due_date,
+          due_time,
+          status,
+          category_id,
+          categories (
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .not('due_date', 'is', null)
+        .neq('status', 'completed')
+        .order('due_date', { ascending: true })
+        .order('due_time', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching schedule:', error)
+        setLoading(false)
+        return
+      }
+
+      const formattedItems: ScheduleItem[] = (items || []).map((item) => {
+        const categoryName = (item.categories as { name: string } | null)?.name || 'Tasks'
+        const isInProgress = item.status === 'in_progress'
+
+        // Format time from 24h to 12h format
+        let formattedTime = "All Day"
+        if (item.due_time) {
+          const [hours, minutes] = item.due_time.split(':')
+          const hour = parseInt(hours)
+          const ampm = hour >= 12 ? 'PM' : 'AM'
+          const hour12 = hour % 12 || 12
+          formattedTime = `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`
+        }
+
+        return {
+          id: item.id,
+          date: parseISO(item.due_date!),
+          time: formattedTime,
+          title: item.title,
+          status: isInProgress ? 'Working On' : 'Upcoming',
+          color: isInProgress ? 'secondary-foreground' : 'primary',
+          borderColor: isInProgress ? 'secondary-foreground' : 'primary',
+          bgColor: isInProgress ? 'secondary' : 'accent',
+          icon: categoryIcons[categoryName] || Task01FreeIcons,
+        }
+      })
+
+      setScheduleData(formattedItems)
+      setLoading(false)
+    }
+
+    fetchSchedule()
+  }, [user, supabase])
 
   // Get schedules for selected date
-  const schedulesForDate = scheduleData.filter(item => 
+  const schedulesForDate = scheduleData.filter(item =>
     isSameDay(item.date, selectedDate)
   )
 
@@ -169,7 +258,12 @@ const ScheduleWithCalendar = () => {
 
       {/* Schedule List */}
       <div className="space-y-3 mb-5">
-        {schedulesForDate.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+            <Loader2 className="w-8 h-8 mb-3 text-gray-300 animate-spin" />
+            <p className="text-sm font-medium">Loading schedule...</p>
+          </div>
+        ) : schedulesForDate.length > 0 ? (
           schedulesForDate.map((schedule) => (
             <div key={schedule.id} className={`flex items-center gap-3 p-3 bg-${schedule.bgColor} border-1 border-${schedule.borderColor} rounded-2xl backdrop-blur`}>
               <div className="text-center min-w-[70px]">

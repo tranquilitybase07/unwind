@@ -72,6 +72,7 @@ export async function processVoiceDump(voiceDumpId: string) {
         category_id: catId,
         priority: item.priority || 'medium',
         due_date: item.due_date || null,
+        due_time: item.due_time || null,
         urgency_score: item.urgency_score || 0,
         importance_score: item.importance_score || 0,
         emotional_weight_score: item.emotional_weight_score || 0,

@@ -6,6 +6,7 @@ export type AIItem = {
   item_type: 'task' | 'idea' | 'worry' | 'habit' | 'errand'
   priority: 'high' | 'medium' | 'low'
   due_date?: string | null
+  due_time?: string | null
   urgency_score: number
   importance_score: number
   emotional_weight_score: number
@@ -34,7 +35,8 @@ You must categorize each item into exactly one of these 7 fixed categories:
 For each item, you must also determine:
 - item_type: 'task', 'idea', 'worry', 'habit', or 'errand'
 - priority: 'high', 'medium', 'low'
-- due_date: YYYY-MM-DD format if mentioned (use relative dates from "today"), otherwise null
+- due_date: YYYY-MM-DD format if mentioned, otherwise null. Convert relative dates like "tomorrow", "Friday", "next week" to actual dates.
+- due_time: HH:MM format in 24-hour time if a specific time is mentioned (e.g., "at 3pm" = "15:00", "morning meeting" = "09:00"), otherwise null
 - urgency_score: 0-100 (how soon?)
 - importance_score: 0-100 (impact?)
 - emotional_weight_score: 0-100 (how much anxiety attached?)
@@ -55,13 +57,48 @@ export async function extractItemsFromTranscript(transcript: string, categories:
   // Construct the prompt with category context if needed, but fixed categories are hardcoded in system prompt for robustness
   // We will map the string result back to IDs in the calling function.
 
+  // Get current date/time info for the AI to use when parsing relative dates
+  const now = new Date()
+
+  const dateTimeContext = `
+IMPORTANT - Current DateTime Context (JavaScript Date object equivalent):
+{
+  "iso": "${now.toISOString()}",
+  "date": "${now.toISOString().split('T')[0]}",
+  "time": "${now.toTimeString().split(' ')[0]}",
+  "year": ${now.getFullYear()},
+  "month": ${now.getMonth() + 1},
+  "day": ${now.getDate()},
+  "hour": ${now.getHours()},
+  "minute": ${now.getMinutes()},
+  "dayOfWeek": ${now.getDay()},
+  "dayOfWeekName": "${now.toLocaleDateString('en-US', { weekday: 'long' })}",
+  "monthName": "${now.toLocaleDateString('en-US', { month: 'long' })}",
+  "formatted": "${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}",
+  "timestamp": ${now.getTime()}
+}
+
+Use this datetime to calculate due_date (YYYY-MM-DD) and due_time (HH:MM) values:
+- "today" = ${now.toISOString().split('T')[0]}
+- "tomorrow" = add 1 day to current date
+- "this Friday" = next Friday from ${now.toLocaleDateString('en-US', { weekday: 'long' })}
+- "next week" = add 7 days to current date
+- "next Monday" = the upcoming Monday
+- "in 3 days" = add 3 days to current date
+- "end of month" = last day of ${now.toLocaleDateString('en-US', { month: 'long' })} ${now.getFullYear()}
+- "at 3pm" = "15:00"
+- "morning" = "09:00"
+- "afternoon" = "14:00"
+- "evening" = "18:00"
+`
+
   const completion = await openRouterChatCompletion({
     model: 'anthropic/claude-3.5-sonnet', // Stable, premium model per user request
     // model: 'anthropic/claude-3-haiku',
     messages: [
       {
         role: 'system',
-        content: SYSTEM_PROMPT
+        content: SYSTEM_PROMPT + dateTimeContext
       },
       {
         role: 'user',
