@@ -20,6 +20,16 @@ interface Category {
   tags: string[]
 }
 
+interface SearchItem {
+  id: string
+  title: string
+  category_name: string
+  category_id: string
+  custom_tags: string[] | null
+  priority: string
+  icon_color: string
+}
+
 // Icon mapping for categories with tag colors
 const categoryIconMap: Record<string, { icon: React.ReactNode; color: string; tagBgColor: string }> = {
   "Tasks": { icon: <Check className="w-5 h-5 text-white" />, color: "bg-primary", tagBgColor: "#22a977ff" },
@@ -36,6 +46,7 @@ export function CategoryContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
   const [allCategories, setAllCategories] = useState<Category[]>([])
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { user } = useAuth()
@@ -182,47 +193,64 @@ export function CategoryContent() {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setCategories(allCategories)
+      setSearchResults([])
       return
     }
 
-    async function searchByTags() {
+    async function searchAll() {
       if (!user) return
 
-      const searchTags = searchQuery
-        .toLowerCase()
-        .split(/[\s,]+/)
-        .map(tag => tag.replace(/^#/, '').trim())
-        .filter(tag => tag.length > 0)
+      const searchTerm = searchQuery.toLowerCase().replace(/^#/, '').trim()
 
-      if (searchTags.length === 0) {
+      if (searchTerm.length === 0) {
         setCategories(allCategories)
+        setSearchResults([])
         return
       }
 
-      // Search for items with matching tags
-      const categoriesWithMatchingItems = await Promise.all(
-        allCategories.map(async (category) => {
-          const { count } = await supabase
-            .from('items')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('category_id', category.id)
-            .neq('status', 'completed')
-            .overlaps('custom_tags', searchTags)
-
-          return {
-            ...category,
-            itemCount: count || 0
-          }
-        })
+      // Filter categories by tags
+      const matchingCategories = allCategories.filter(cat => 
+        cat.tags.some(tag => tag.toLowerCase().includes(searchTerm))
       )
 
-      // Only show categories with matching items
-      const filteredCategories = categoriesWithMatchingItems.filter(cat => cat.itemCount > 0)
-      setCategories(filteredCategories)
+      // Search for items with matching tags
+      const { data: matchingItems } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          category_id,
+          custom_tags,
+          priority,
+          categories (
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .neq('status', 'completed')
+        .overlaps('custom_tags', [searchTerm])
+        .limit(20)
+
+      // Map to SearchItem format
+      const items: SearchItem[] = (matchingItems || []).map((item) => {
+        const categoryName = (item.categories as { name: string } | null)?.name || 'Tasks'
+        const iconConfig = categoryIconMap[categoryName] || categoryIconMap["Tasks"]
+        return {
+          id: item.id,
+          title: item.title,
+          category_name: categoryName,
+          category_id: item.category_id,
+          custom_tags: item.custom_tags,
+          priority: item.priority || 'medium',
+          icon_color: iconConfig.color,
+        }
+      })
+
+      setSearchResults(items)
+      setCategories(matchingCategories.length > 0 ? matchingCategories : allCategories)
     }
 
-    searchByTags()
+    searchAll()
   }, [searchQuery, allCategories, user, supabase])
 
   return (
@@ -319,6 +347,46 @@ export function CategoryContent() {
             </div>
             <h3 className="text-lg font-semibold text-gray-400">New Space</h3>
           </div> */}
+        </div>
+      )}
+
+      {/* Search Results - Matching Items */}
+      {searchQuery.trim() && searchResults.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Matching Items ({searchResults.length})
+          </h2>
+          <div className="space-y-3">
+            {searchResults.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => router.push(`/dashboard/category/${item.category_id}`)}
+                className="bg-white rounded-xl p-4 border border-gray-200 hover:border-primary/50 transition-all cursor-pointer flex items-center gap-4"
+              >
+                {/* Priority indicator */}
+                <div className={`w-2 h-10 rounded-full ${
+                  item.priority === 'high' ? 'bg-red-500' :
+                  item.priority === 'medium' ? 'bg-yellow-500' :
+                  'bg-green-500'
+                }`} />
+                
+                {/* Item info */}
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{item.title}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`px-2 py-0.5 ${item.icon_color} text-white text-xs rounded-full`}>
+                      {item.category_name}
+                    </span>
+                    {item.custom_tags && item.custom_tags.slice(0, 2).map((tag, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
