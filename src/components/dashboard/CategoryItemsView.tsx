@@ -15,12 +15,12 @@ interface Item {
   description: string | null
   due_date: string | null
   due_time: string | null
-  status: string
-  priority: string
+  status: string | null
+  priority: string | null
   custom_tags: string[] | null
-  urgency_score: number
-  importance_score: number
-  emotional_weight_score: number
+  urgency_score: number | null
+  importance_score: number | null
+  emotional_weight_score: number | null
 }
 
 interface Category {
@@ -86,7 +86,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
         .eq('user_id', user.id)
         .eq('category_id', categoryId)
         .neq('status', 'completed')
-        .order('due_date', { ascending: true, nullsLast: true })
+        .order('due_date', { ascending: true })
         .order('priority', { ascending: false })
 
       if (itemsError) {
@@ -187,31 +187,28 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
         <div className="flex gap-2">
           <button
             onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === "all"
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             All
           </button>
           <button
             onClick={() => setFilter("today")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === "today"
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "today"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             Today
           </button>
           <button
             onClick={() => setFilter("week")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === "week"
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "week"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             This Week
           </button>
@@ -250,9 +247,8 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                 <div className="flex items-center gap-3 flex-wrap">
                   {/* Priority Badge */}
                   <span
-                    className={`px-3 py-1 rounded-lg text-xs font-medium border ${
-                      priorityColors[item.priority as keyof typeof priorityColors] || priorityColors.low
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium border ${priorityColors[item.priority as keyof typeof priorityColors] || priorityColors.low
+                      }`}
                   >
                     {item.priority?.toUpperCase()}
                   </span>
@@ -260,11 +256,10 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                   {/* Due Date */}
                   {item.due_date && (
                     <div
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium ${
-                        isOverdue(item.due_date)
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium ${isOverdue(item.due_date)
+                        ? "bg-red-100 text-red-700"
+                        : "bg-gray-100 text-gray-700"
+                        }`}
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       {formatDueDate(item.due_date, item.due_time)}
@@ -273,9 +268,8 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
 
                   {/* Status Badge */}
                   <span
-                    className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                      statusColors[item.status as keyof typeof statusColors] || statusColors.pending
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium ${statusColors[item.status as keyof typeof statusColors] || statusColors.pending
+                      }`}
                   >
                     {item.status?.replace('_', ' ').toUpperCase()}
                   </span>
@@ -308,7 +302,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-red-500 rounded-full"
-                        style={{ width: `${item.urgency_score}%` }}
+                        style={{ width: `${item.urgency_score || 0}%` }}
                       />
                     </div>
                   </div>
@@ -317,7 +311,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${item.importance_score}%` }}
+                        style={{ width: `${item.importance_score || 0}%` }}
                       />
                     </div>
                   </div>
@@ -326,7 +320,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 rounded-full"
-                        style={{ width: `${item.emotional_weight_score}%` }}
+                        style={{ width: `${item.emotional_weight_score || 0}%` }}
                       />
                     </div>
                   </div>
