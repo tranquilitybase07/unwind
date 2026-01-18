@@ -134,7 +134,7 @@ export function VoiceDumpCard() {
         <button
           onClick={handleButtonClick}
           disabled={isLoading || isConnecting}
-          className="relative z-10 flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="cursor-pointer relative z-10 flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
         >
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
             <Mic className="w-4 h-4 text-white" />

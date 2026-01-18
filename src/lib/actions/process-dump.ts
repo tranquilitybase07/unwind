@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { extractItemsFromTranscript } from '@/lib/ai/prompts'
 import type { Database } from '@/lib/supabase/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 
 // Internal processing function that accepts a Supabase client
 // This allows it to be called from webhooks with service role client
@@ -40,12 +41,37 @@ async function processVoiceDumpInternal(
   const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]))
 
   try {
-    // 3. Call AI Extraction
+    // 3. Call AI Extraction with Sentry monitoring
     console.log('🤖 Sending transcript to AI...')
     console.log('📂 Available categories map:', Array.from(categoryMap.entries()))
 
     const startTime = Date.now()
-    const result = await extractItemsFromTranscript(voiceDump.transcription, categories)
+    
+    // Wrap AI call with Sentry span for monitoring
+    const result = await Sentry.startSpan(
+      {
+        op: 'ai.chat.completions',
+        name: 'Extract Tasks with Claude',
+        attributes: {
+          'ai.model': 'anthropic/claude-3.5-sonnet',
+          'transcript.length': voiceDump.transcription.length,
+          'categories.count': categories.length,
+        },
+      },
+      async (span) => {
+        const extractionResult = await extractItemsFromTranscript(voiceDump.transcription, categories)
+        
+        // Track AI metrics using setAttribute
+        const itemsExtracted = extractionResult.items.length
+        span.setAttribute('ai.items_extracted', itemsExtracted)
+        span.setAttribute('extraction_success', itemsExtracted > 0)
+        span.setAttribute('voice_dump_id', voiceDumpId)
+        span.setAttribute('user_id', voiceDump.user_id)
+        
+        return extractionResult
+      }
+    )
+    
     const durationMs = Date.now() - startTime
     
     console.log(`✅ AI Extraction complete in ${durationMs}ms. Found ${result.items.length} items.`)

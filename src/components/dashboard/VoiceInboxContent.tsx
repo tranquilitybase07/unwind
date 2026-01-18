@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { format, isToday, isYesterday, parseISO } from "date-fns"
 import EditTaskModal from "./EditTaskModal"
+import { useRouter } from "next/navigation"
 
 interface CategorizedItem {
   id: string
@@ -108,6 +109,12 @@ export function VoiceInboxContent() {
   const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([])
   const { user } = useAuth()
   const supabase = createClient()
+  const router = useRouter()
+
+  // Handle Start Voice Dump - navigate to home page
+  const handleStartVoiceDump = () => {
+    router.push('/dashboard')
+  }
 
   // Handle Move To Today - sets due_date to today
   const handleMoveToToday = async (itemId: string) => {
@@ -292,7 +299,10 @@ export function VoiceInboxContent() {
             <h1 className="text-2xl font-bold text-gray-900">Voice Inbox</h1>
             <p className="text-gray-500 text-sm">Your raw thoughts, sorted by AI.</p>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-colors">
+          <button 
+            onClick={handleStartVoiceDump}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-colors"
+          >
             <HugeiconsIcon icon={Mic01FreeIcons} size={18} />
             Start Voice Dump
           </button>

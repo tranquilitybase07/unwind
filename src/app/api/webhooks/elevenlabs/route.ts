@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { processVoiceDumpWithClient } from "@/lib/actions/process-dump";
 import type { Database } from "@/lib/supabase/types";
 import crypto from "crypto";
+import * as Sentry from "@sentry/nextjs";
 
 // Verify HMAC signature from ElevenLabs
 function verifyWebhookSignature(
@@ -155,6 +156,19 @@ async function handleTranscriptionWebhook(data: any) {
     }
 
     console.log("👤 User ID from dynamic variables:", userId);
+
+    // Add Sentry context for better error tracking
+    Sentry.setContext('webhook_data', {
+      conversation_id: data.conversation_id,
+      user_id: userId,
+      transcript_length: fullTranscript.length,
+      has_metadata: !!data.metadata,
+      duration_seconds: data.metadata?.duration_seconds || null,
+    });
+
+    Sentry.setUser({
+      id: userId,
+    });
 
     // Create Supabase client with service role for webhook operations
     const supabase = createServiceClient();
