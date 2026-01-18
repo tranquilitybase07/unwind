@@ -120,12 +120,12 @@ export function Home() {
 
         {/* Main heading */}
         <h1 className="text-6xl md:text-7xl font-bold text-emerald-900 text-center leading-tight mb-6">
-          Regulate your mood<br />with our solution
+          Your Mind <br />Deserves to Rest
         </h1>
 
         {/* Subtitle */}
         <p className="text-emerald-700/80 text-center max-w-md mb-8">
-          To live your life to the fullest, we're continuing to find ways to prevent mental health problems.
+          Stop holding everything in your head. Get it out, organized, and done.
         </p>
 
         {/* CTA Buttons */}
@@ -157,15 +157,15 @@ export function Home() {
             />
           </svg>
 
-          <h3 className="text-2xl font-bold text-emerald-900 italic mb-3">Free live support</h3>
+          <h3 className="text-2xl font-bold text-emerald-900 italic mb-3">Voice Dump Without Judgment</h3>
           <p className="text-emerald-800 text-sm leading-relaxed mb-4">
-            We're always here when you need us, our free live support will answer all your questions immediately
+            Unfiltered. Messy. Raw. Talk for as long as you need. No judgment, no formatting required. Just pure, unstructured thoughts—we handle the rest.
           </p>
 
           {/* Illustration placeholder */}
           <div className="flex justify-center mt-auto">
-            <div className="w-40 h-40 rounded-full bg-emerald-200/50 flex items-center justify-center">
-              <span className="text-6xl">🤝</span>
+            <div className="w-24 h-24 rounded-full bg-emerald-200/50 flex items-center justify-center">
+              <span className="text-5xl">🤝</span>
             </div>
           </div>
         </div>
@@ -183,15 +183,14 @@ export function Home() {
             />
           </svg>
 
-          <h3 className="text-2xl font-bold text-teal-900 italic mb-3">Increase Security</h3>
+          <h3 className="text-2xl font-bold text-teal-900 italic mb-3">AI That Understands Anxiety</h3>
           <p className="text-teal-800 text-sm leading-relaxed text-center mb-4">
-            All communications done through our platform is highly encrypted and fully secure, we care about privacy
-          </p>
+            AI that gets anxiety. Detects spirals. Separates real threats from catastrophizing. Validates, doesn't dismiss.          </p>
 
           {/* Illustration placeholder */}
           <div className="flex justify-center mt-auto">
-            <div className="w-40 h-40 rounded-full bg-teal-300/50 flex items-center justify-center">
-              <span className="text-6xl">🔒</span>
+            <div className="w-24 h-24 rounded-full bg-teal-300/50 flex items-center justify-center">
+              <span className="text-5xl">🔒</span>
             </div>
           </div>
         </div>
@@ -209,15 +208,15 @@ export function Home() {
             />
           </svg>
 
-          <h3 className="text-2xl font-bold text-green-900 italic mb-3">Intuitive interface</h3>
+          <h3 className="text-2xl font-bold text-green-900 italic mb-3">Focus on What Matters Today</h3>
           <p className="text-green-800 text-sm leading-relaxed text-center mb-4">
-            Our system provides the most intuitive interface built based on extensive user interaction and research.
+            See only what's due today. Not 47 things. Not next month. Just 3-5 items that actually need your attention. Everything else is safely stored and hidden.
           </p>
 
           {/* Illustration placeholder */}
           <div className="flex justify-center mt-auto">
-            <div className="w-40 h-40 rounded-full bg-green-200/50 flex items-center justify-center">
-              <span className="text-6xl">✨</span>
+            <div className="w-22 h-22 rounded-full bg-green-200/50 flex items-center justify-center">
+              <span className="text-5xl">✨</span>
             </div>
           </div>
         </div>
