@@ -42,9 +42,9 @@ export function DashboardHeader() {
           onClick={handleSignOut}
           variant="ghost"
           size="sm"
-          className="gap-2"
+          className="gap-2 cursor-pointer"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 " />
           Sign Out
         </Button>
       </div>

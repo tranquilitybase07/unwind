@@ -7,12 +7,18 @@ import { Mic01FreeIcons, Play } from "@hugeicons/core-free-icons"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { format, isToday, isYesterday, parseISO } from "date-fns"
+import EditTaskModal from "./EditTaskModal"
 
 interface CategorizedItem {
   id: string
   type: "task" | "idea" | "worry" | "errand" | "health" | "relationship" | "recurring"
   text: string
   categoryName: string
+  category_id?: string
+  description?: string | null
+  priority?: string
+  status?: string
+  custom_tags?: string[] | null
 }
 
 interface VoiceRecording {
@@ -82,8 +88,108 @@ export function VoiceInboxContent() {
   const [voiceRecordings, setVoiceRecordings] = useState<VoiceRecording[]>([])
   const [selectedRecording, setSelectedRecording] = useState<VoiceRecording | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<CategorizedItem | null>(null)
+  const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([])
   const { user } = useAuth()
   const supabase = createClient()
+
+  // Handle Move To Today - sets due_date to today
+  const handleMoveToToday = async (itemId: string) => {
+    if (!user) return
+
+    const today = format(new Date(), "yyyy-MM-dd")
+
+    const { error } = await supabase
+      .from("items")
+      .update({ due_date: today })
+      .eq("id", itemId)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error moving to today:", error)
+      return
+    }
+
+    // Show success feedback (item stays in list, just has due date updated)
+    alert("Task scheduled for today!")
+  }
+
+  // Handle Edit - opens edit modal with item data
+  const handleOpenEdit = async (item: CategorizedItem) => {
+    // Fetch full item details
+    const { data: fullItem } = await supabase
+      .from("items")
+      .select("*")
+      .eq("id", item.id)
+      .single()
+
+    if (fullItem) {
+      setEditingItem({
+        ...item,
+        category_id: fullItem.category_id,
+        description: fullItem.description,
+        priority: fullItem.priority || "medium",
+        status: fullItem.status || "pending",
+        custom_tags: fullItem.custom_tags,
+      })
+      setIsEditModalOpen(true)
+    }
+  }
+
+  // Handle Edit Submit
+  const handleEditSubmit = async (task: {
+    id: string
+    title: string
+    note: string
+    categoryId: string
+    tags: string[]
+    priority: "low" | "medium" | "high"
+    status: "pending" | "completed"
+  }) => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from("items")
+      .update({
+        title: task.title,
+        description: task.note,
+        category_id: task.categoryId,
+        custom_tags: task.tags,
+        priority: task.priority,
+        status: task.status,
+      })
+      .eq("id", task.id)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error updating item:", error)
+      return
+    }
+
+    // Refresh the selected recording's items
+    if (selectedRecording) {
+      const updatedItems = selectedRecording.categorizedItems.map((item) =>
+        item.id === task.id ? { ...item, text: task.title } : item
+      )
+      setSelectedRecording({ ...selectedRecording, categorizedItems: updatedItems })
+    }
+  }
+
+  // Fetch categories for the edit modal
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name")
+        .order("display_order")
+
+      if (data) {
+        setAllCategories(data)
+      }
+    }
+    fetchCategories()
+  }, [supabase])
 
   // Fetch voice dumps and their categorized items
   useEffect(() => {
@@ -130,6 +236,7 @@ export function VoiceInboxContent() {
               type: categoryToType[categoryName] || 'task',
               text: item.title,
               categoryName,
+              category_id: item.category_id,
             }
           })
 
@@ -160,6 +267,7 @@ export function VoiceInboxContent() {
   }, [user, supabase])
 
   return (
+    <>
     <div className="flex mt-8 flex-1 h-full overflow-hidden">
       {/* Main Voice Inbox List */}
       <div className="flex-1 px-8 py-6 overflow-y-auto scrollbar-hidden hover:scrollbar-auto">
@@ -308,11 +416,23 @@ export function VoiceInboxContent() {
                     </div>
                     <div className="flex items-center gap-2">
                       {item.type === "task" && (
-                        <button className="px-2 py-1 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleMoveToToday(item.id)
+                          }}
+                          className="cursor-pointer px-2 py-1 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10"
+                        >
                           MOVE TO TODAY
                         </button>
                       )}
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenEdit(item)
+                        }}
+                        className="cursor-pointer text-gray-400 hover:text-gray-600"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                     </div>
@@ -338,6 +458,27 @@ export function VoiceInboxContent() {
         </div>
       )}
     </div>
+
+    {/* Edit Task Modal */}
+    <EditTaskModal
+      isOpen={isEditModalOpen}
+      onClose={() => {
+        setIsEditModalOpen(false)
+        setEditingItem(null)
+      }}
+      onSubmit={handleEditSubmit}
+      categories={allCategories}
+      initialData={editingItem ? {
+        id: editingItem.id,
+        title: editingItem.text,
+        description: editingItem.description || null,
+        priority: editingItem.priority || "medium",
+        status: editingItem.status || "pending",
+        custom_tags: editingItem.custom_tags || null,
+        category_id: editingItem.category_id || "",
+      } : undefined}
+    />
+    </>
   )
 }
 
