@@ -9,15 +9,27 @@ import OpenAI from 'openai';
  * - Thread-based conversation management
  */
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error(
-    'Missing OPENAI_API_KEY environment variable. ' +
-    'Please add it to your .env.local file.'
-  );
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error(
+      'Missing OPENAI_API_KEY environment variable. ' +
+      'Please add it to your .env.local file.'
+    );
+  }
+
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 }
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Lazy initialization
+export const openai = new Proxy({} as OpenAI, {
+  get: (target, prop) => {
+    if (!Object.keys(target).length) {
+      Object.assign(target, getOpenAIClient());
+    }
+    return (target as any)[prop];
+  }
 });
 
 /**

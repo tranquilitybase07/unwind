@@ -132,6 +132,8 @@ export async function sendMessage(
 
     // Process stream
     for await (const event of run) {
+      console.log('[Orchestrator] Main event:', event.event);
+
       if (event.event === 'thread.message.delta') {
         // Text delta
         const delta = event.data.delta;
@@ -178,9 +180,9 @@ export async function sendMessage(
           // Submit tool outputs and continue stream
           const submitRun = await withRetry(
             () => openai.beta.threads.runs.submitToolOutputs(
-              threadId,
               event.data.id,
               {
+                thread_id: threadId,
                 tool_outputs: toolOutputs,
                 stream: true,
               }
@@ -189,7 +191,10 @@ export async function sendMessage(
           );
 
           // Continue processing stream after tool submission
+          let hasCompleted = false;
           for await (const submitEvent of submitRun) {
+            console.log('[Orchestrator] Submit event:', submitEvent.event);
+
             if (submitEvent.event === 'thread.message.delta') {
               const delta = submitEvent.data.delta;
               if (delta.content && delta.content[0]?.type === 'text') {
@@ -199,13 +204,21 @@ export async function sendMessage(
                 });
               }
             } else if (submitEvent.event === 'thread.run.completed') {
+              hasCompleted = true;
               onEvent({ type: 'done' });
             } else if (submitEvent.event === 'thread.run.failed') {
+              hasCompleted = true;
               onEvent({
                 type: 'error',
                 error: submitEvent.data.last_error?.message || 'Run failed',
               });
             }
+          }
+
+          // Ensure we always send a done event if not sent
+          if (!hasCompleted) {
+            console.log('[Orchestrator] Stream ended without completion event, sending done');
+            onEvent({ type: 'done' });
           }
         }
       } else if (event.event === 'thread.run.completed') {
@@ -274,7 +287,7 @@ export async function deleteThread(
   try {
     // Delete from OpenAI
     await withRetry(
-      () => openai.beta.threads.del(threadId),
+      () => openai.beta.threads.delete(threadId),
       'Delete OpenAI thread'
     );
 

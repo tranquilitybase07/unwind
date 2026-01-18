@@ -173,7 +173,8 @@ function formatDeadlineItem(item: any) {
   return {
     title: item.title,
     due: item.due_date ? formatDate(new Date(item.due_date), true) : 'No specific date',
-    category: item.category_name,
+    due_time: item.due_time || null,
+    category: item.categories?.name || 'Unknown',
     priority: item.priority,
     emotional_weight: item.final_priority_score > 70 ? 'High' : item.final_priority_score > 40 ? 'Medium' : 'Low',
   };

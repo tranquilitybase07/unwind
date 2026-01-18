@@ -14,7 +14,7 @@ import { formatWorrySpiralInsights, formatMoodInsights } from '../utils/insights
  *
  * Patterns and triggers for worry spirals
  */
-export async function analyzeWorrySpi rals(
+export async function analyzeWorrySpirals(
   context: ToolContext,
   params: {
     time_range?: string;

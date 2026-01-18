@@ -13,7 +13,7 @@ export {
 
 // Anxiety Insights Tools (3)
 export {
-  analyzeWorrySpi rals,
+  analyzeWorrySpirals,
   getMoodTimeline,
   identifyEmotionalTriggers,
 } from './anxiety-insights';
@@ -47,7 +47,7 @@ export type ToolExecutor = (
  * Tool registry mapping function names to executors
  */
 import { analyzeCompletionPatterns, analyzeProcrastinationTrends, analyzeRecurringAdherence } from './habit-analysis';
-import { analyzeWorrySpi rals, getMoodTimeline, identifyEmotionalTriggers } from './anxiety-insights';
+import { analyzeWorrySpirals, getMoodTimeline, identifyEmotionalTriggers } from './anxiety-insights';
 import { getUpcomingDeadlines, getForgottenTasks, suggestTaskBreakdown, getPriorityDistribution } from './task-intelligence';
 import { searchItemsAdvanced, getUserContext } from './search-context';
 import type { ToolContext, ToolResult } from './types';
@@ -59,7 +59,7 @@ export const TOOL_EXECUTORS: Record<string, ToolExecutor> = {
   'analyze_recurring_adherence': analyzeRecurringAdherence,
 
   // Anxiety Insights
-  'analyze_worry_spirals': analyzeWorrySpi rals,
+  'analyze_worry_spirals': analyzeWorrySpirals,
   'get_mood_timeline': getMoodTimeline,
   'identify_emotional_triggers': identifyEmotionalTriggers,
 

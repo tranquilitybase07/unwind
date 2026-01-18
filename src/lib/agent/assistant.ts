@@ -79,7 +79,7 @@ export async function getAssistant(assistantId: string) {
  */
 export async function deleteAssistant(assistantId: string) {
   try {
-    await openai.beta.assistants.del(assistantId);
+    await openai.beta.assistants.delete(assistantId);
     console.log('✅ Assistant deleted successfully!');
   } catch (error) {
     console.error('❌ Failed to delete assistant:', error);
@@ -91,8 +91,8 @@ export async function deleteAssistant(assistantId: string) {
  * CLI script to create assistant
  * Run: npx tsx src/lib/agent/assistant.ts
  */
-if (require.main === module) {
-  createAssistant()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1));
-}
+// if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
+//   createAssistant()
+//     .then(() => process.exit(0))
+//     .catch(() => process.exit(1));
+// }

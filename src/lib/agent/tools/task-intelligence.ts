@@ -33,38 +33,54 @@ export async function getUpcomingDeadlines(
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() + daysAhead);
 
-    // Base query for pending items with deadlines
-    const baseQuery = context.supabase
-      .from('items')
-      .select(`
-        id,
-        title,
-        due_date,
-        due_time,
-        priority,
-        final_priority_score,
-        category_id,
-        categories!inner(name)
-      `)
-      .eq('user_id', context.userId)
-      .eq('status', 'pending')
-      .gte('final_priority_score', minPriority)
-      .not('due_date', 'is', null);
+    // Base query builder function
+    const buildQuery = () => {
+      let query = context.supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          due_date,
+          due_time,
+          priority,
+          final_priority_score,
+          category_id,
+          categories!inner(name)
+        `)
+        .eq('user_id', context.userId)
+        .neq('status', 'completed')  // Match UI logic: show all non-completed tasks
+        .not('due_date', 'is', null);
+
+      // Only filter by priority if > 0 (to include null values when min is 0)
+      if (minPriority > 0) {
+        query = query.gte('final_priority_score', minPriority);
+      }
+
+      return query;
+    };
 
     // Overdue tasks
     let overdue: any[] = [];
     if (includeOverdue) {
-      const { data: overdueData } = await baseQuery
+      const { data: overdueData } = await buildQuery()
         .lt('due_date', toSqlDate(today));
 
       overdue = overdueData || [];
     }
 
     // Today's tasks
-    const { data: todayData } = await baseQuery
-      .eq('due_date', toSqlDate(today));
+    const todayDateSql = toSqlDate(today);
+    console.log('[getUpcomingDeadlines] Querying for today:', todayDateSql);
+
+    const { data: todayData, error: todayError } = await buildQuery()
+      .eq('due_date', todayDateSql);
+
+    if (todayError) {
+      console.error('[getUpcomingDeadlines] Error fetching today tasks:', todayError);
+    }
 
     const todayTasks = todayData || [];
+    console.log('[getUpcomingDeadlines] Found today tasks:', todayTasks.length, todayTasks);
 
     // Urgent (tomorrow to 3 days)
     const tomorrow = new Date(today);
@@ -72,7 +88,7 @@ export async function getUpcomingDeadlines(
     const threeDaysOut = new Date(today);
     threeDaysOut.setDate(threeDaysOut.getDate() + 3);
 
-    const { data: urgentData } = await baseQuery
+    const { data: urgentData } = await buildQuery()
       .gte('due_date', toSqlDate(tomorrow))
       .lte('due_date', toSqlDate(threeDaysOut));
 
@@ -82,7 +98,7 @@ export async function getUpcomingDeadlines(
     const fourDaysOut = new Date(today);
     fourDaysOut.setDate(fourDaysOut.getDate() + 4);
 
-    const { data: upcomingData } = await baseQuery
+    const { data: upcomingData } = await buildQuery()
       .gte('due_date', toSqlDate(fourDaysOut))
       .lte('due_date', toSqlDate(endDate));
 

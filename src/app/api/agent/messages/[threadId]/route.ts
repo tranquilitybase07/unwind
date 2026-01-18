@@ -13,7 +13,7 @@ import { getMessages } from '@/lib/agent/orchestrator';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -28,7 +28,7 @@ export async function GET(
       );
     }
 
-    const { threadId } = params;
+    const { threadId } = await params;
 
     if (!threadId) {
       return NextResponse.json(

@@ -1,202 +1,274 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
-  IconAlertTriangle,
-  IconArrowUp,
-  IconCloud,
-  IconFileSpark,
-  IconGauge,
-  IconPhotoScan,
-} from "@tabler/icons-react";
-import { useRef, useState } from "react";
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ui/conversation";
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+} from "@/components/ui/message";
+import { Response } from "@/components/ui/response";
+import { ShimmeringText } from "@/components/ui/shimmering-text";
+import { IconArrowUp, IconSparkles, IconBrain } from "@tabler/icons-react";
 
-const PROMPTS = [
-  {
-    icon: IconFileSpark,
-    text: "Write documentation",
-    prompt:
-      "Write comprehensive documentation for this codebase, including setup instructions, API references, and usage examples.",
-  },
-  {
-    icon: IconGauge,
-    text: "Optimize performance",
-    prompt:
-      "Analyze the codebase for performance bottlenecks and suggest optimizations to improve loading times and runtime efficiency.",
-  },
-  {
-    icon: IconAlertTriangle,
-    text: "Find and fix 3 bugs",
-    prompt:
-      "Scan through the codebase to identify and fix 3 critical bugs, providing detailed explanations for each fix.",
-  },
-];
+// Message types
+type ToolCall = {
+  name: string;
+  status: "running" | "done";
+};
 
-const MODELS = [
-  {
-    value: "gpt-5",
-    name: "GPT-5",
-    description: "Most advanced model",
-    max: true,
-  },
-  {
-    value: "gpt-4o",
-    name: "GPT-4o",
-    description: "Fast and capable",
-  },
-  {
-    value: "gpt-4",
-    name: "GPT-4",
-    description: "Reliable and accurate",
-  },
-  {
-    value: "claude-3.5",
-    name: "Claude 3.5 Sonnet",
-    description: "Great for coding tasks",
-  },
-];
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  toolCalls?: ToolCall[];
+};
 
-export default function Ai02() {
+export default function ChatUI() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handlePromptClick = (prompt: string) => {
+  // Auto-resize textarea
+  useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.value = prompt;
-      setInputValue(prompt);
-      inputRef.current.focus();
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+    }
+  }, [inputValue]);
+
+  // Handle simple chat API (no streaming)
+  const sendMessage = useCallback(async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: inputValue.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+
+    try {
+      // Build conversation history for API
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const response = await fetch("/api/agent/chat-simple", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          conversationHistory,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Add assistant response
+      const assistantMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.response,
+        timestamp: new Date(),
+        toolCalls: data.toolCalls?.map((tc: any) => ({
+          name: tc.name,
+          status: "done" as const,
+        })),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.log("Request aborted");
+      } else {
+        console.error("Error sending message:", error);
+
+        // Add error message
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            role: "assistant",
+            content: "I'm having trouble connecting right now. Please try again in a moment.",
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [inputValue, isLoading, messages]);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
-  const handleModelChange = (value: string) => {
-    const model = MODELS.find((m) => m.value === value);
-    if (model) {
-      setSelectedModel(model);
-    }
+  // Format tool name for display
+  const formatToolName = (toolName: string): string => {
+    return toolName
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
-
-  const renderMaxBadge = () => (
-    <div className="flex h-[14px] items-center gap-1.5 rounded border border-border px-1 py-0">
-      <span
-        className="text-[9px] font-bold uppercase"
-        style={{
-          background:
-            "linear-gradient(to right, rgb(129, 161, 193), rgb(125, 124, 155))",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        MAX
-      </span>
-    </div>
-  );
 
   return (
-    <div className="flex flex-col gap-4 w-full mb-5 p-4 z-10">
-      <div className="flex min-h-[120px] flex-col rounded-2xl cursor-text bg-card border border-border shadow-lg">
-        <div className="flex-1 relative overflow-y-auto max-h-[258px]">
-          <Textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask anything"
-            className="w-full border-0 p-3 transition-[padding] duration-200 ease-in-out min-h-[48.4px] outline-none text-[16px] text-foreground resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent! whitespace-pre-wrap break-words"
-          />
-        </div>
-
-        <div className="flex min-h-[40px] items-center gap-2 p-2 pb-1">
-          <div className="flex aspect-1 items-center gap-1 rounded-full bg-muted p-1.5 text-xs">
-            <IconCloud className="h-4 w-4 text-muted-foreground" />
-          </div>
-
-          <div className="relative flex items-center">
-            <Select
-              value={selectedModel.value}
-              onValueChange={handleModelChange}
-            >
-              <SelectTrigger className="w-fit border-none bg-transparent! p-0 text-sm text-muted-foreground hover:text-foreground focus:ring-0 shadow-none">
-                <SelectValue>
-                  {selectedModel.max ? (
-                    <div className="flex items-center gap-1">
-                      <span>{selectedModel.name}</span>
-                      {renderMaxBadge()}
-                    </div>
-                  ) : (
-                    <span>{selectedModel.name}</span>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {MODELS.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    {model.max ? (
-                      <div className="flex items-center gap-1">
-                        <span>{model.name}</span>
-                        {renderMaxBadge()}
-                      </div>
+    <div className="flex h-full w-full flex-col">
+      {/* Conversation Area - This scrolls */}
+      <Conversation className="flex-1 overflow-y-auto">
+        <ConversationContent>
+          {messages.length === 0 ? (
+            <ConversationEmptyState
+              title={
+                <ShimmeringText
+                  text="How can I help you today?"
+                  duration={2}
+                  className="text-lg font-semibold"
+                />
+              }
+              description="I can help you understand your mental health patterns, analyze your habits, and provide insights about your well-being."
+              icon={<IconSparkles className="h-12 w-12" />}
+            />
+          ) : (
+            <div className="flex flex-col gap-1">
+              {messages.map((message) => (
+                <Message key={message.id} from={message.role}>
+                  <MessageAvatar
+                    src={
+                      message.role === "user"
+                        ? "/avatar-user.png"
+                        : "/avatar-agent.png"
+                    }
+                    name={message.role === "user" ? "You" : "Agent"}
+                  />
+                  <MessageContent variant="flat">
+                    {message.role === "assistant" ? (
+                      <>
+                        {message.toolCalls && message.toolCalls.length > 0 && (
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            {message.toolCalls.map((tool, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                              >
+                                <IconBrain className="h-3 w-3" />
+                                <span>{formatToolName(tool.name)}</span>
+                                {tool.status === "running" && (
+                                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Response>{message.content}</Response>
+                      </>
                     ) : (
-                      <span>{model.name}</span>
+                      <p className="whitespace-pre-wrap">{message.content}</p>
                     )}
-                    <span className="text-muted-foreground block text-xs">
-                      {model.description}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  </MessageContent>
+                </Message>
+              ))}
 
-          <div className="ml-auto flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-100"
-              title="Attach images"
-            >
-              <IconPhotoScan className="h-5 w-5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-6 w-6 rounded-full transition-all duration-100 cursor-pointer bg-primary",
-                inputValue && "bg-primary hover:bg-primary/90!"
+              {/* Typing indicator when thinking */}
+              {isLoading && (
+                <Message from="assistant">
+                  <MessageAvatar src="/avatar-agent.png" name="Agent" />
+                  <MessageContent variant="flat">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground [animation-delay:0ms]" />
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground [animation-delay:150ms]" />
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        Thinking...
+                      </span>
+                    </div>
+                  </MessageContent>
+                </Message>
               )}
-              disabled={!inputValue}
-            >
-              <IconArrowUp className="h-4 w-4 text-primary-foreground" />
-            </Button>
+            </div>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+
+      {/* Input Area - Fixed at bottom */}
+      <div className="border-t border-border bg-background p-4">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex min-h-[60px] flex-col rounded-2xl border border-border bg-card shadow-sm">
+            <div className="relative flex-1 overflow-y-auto max-h-[200px]">
+              <Textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about your patterns, habits, or well-being..."
+                disabled={isLoading}
+                className="min-h-[48px] w-full resize-none border-0 bg-transparent p-3 text-[16px] outline-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+
+            <div className="flex min-h-[40px] items-center gap-2 px-2 pb-1">
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-7 w-7 rounded-full transition-all duration-200",
+                    inputValue.trim() && !isLoading
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                  disabled={!inputValue.trim() || isLoading}
+                  onClick={sendMessage}
+                >
+                  <IconArrowUp className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
+
+          {/* Helper text */}
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Press <kbd className="rounded bg-muted px-1">Enter</kbd> to send,{" "}
+            <kbd className="rounded bg-muted px-1">Shift+Enter</kbd> for new line
+          </p>
         </div>
       </div>
-
-      {/* <div className="flex flex-wrap justify-center gap-2">
-        {PROMPTS.map((button) => {
-          const IconComponent = button.icon;
-          return (
-            <Button
-              key={button.text}
-              variant="ghost"
-              className="group flex items-center gap-2 rounded-full border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:bg-muted/30 h-auto bg-transparent dark:bg-muted"
-              onClick={() => handlePromptClick(button.prompt)}
-            >
-              <IconComponent className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-              <span>{button.text}</span>
-            </Button>
-          );
-        })}
-      </div> */}
     </div>
   );
 }

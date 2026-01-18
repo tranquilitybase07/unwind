@@ -5,13 +5,13 @@
  * These schemas are used by OpenAI's function calling to determine when and how to use each tool.
  */
 
-import type { ChatCompletionTool } from 'openai/resources/chat/completions';
+import type { FunctionTool } from 'openai/resources/beta/assistants';
 
 /**
  * Habit Analysis Tools (3)
  */
 
-export const analyzeCompletionPatterns: ChatCompletionTool = {
+export const analyzeCompletionPatterns: FunctionTool = {
   type: 'function',
   function: {
     name: 'analyze_completion_patterns',
@@ -40,7 +40,7 @@ export const analyzeCompletionPatterns: ChatCompletionTool = {
   },
 };
 
-export const analyzeProcrastinationTrends: ChatCompletionTool = {
+export const analyzeProcrastinationTrends: FunctionTool = {
   type: 'function',
   function: {
     name: 'analyze_procrastination_trends',
@@ -64,7 +64,7 @@ export const analyzeProcrastinationTrends: ChatCompletionTool = {
   },
 };
 
-export const analyzeRecurringAdherence: ChatCompletionTool = {
+export const analyzeRecurringAdherence: FunctionTool = {
   type: 'function',
   function: {
     name: 'analyze_recurring_adherence',
@@ -88,7 +88,7 @@ export const analyzeRecurringAdherence: ChatCompletionTool = {
  * Anxiety Insights Tools (3)
  */
 
-export const analyzeWorrySpi rals: ChatCompletionTool = {
+export const analyzeWorrySpirals: FunctionTool = {
   type: 'function',
   function: {
     name: 'analyze_worry_spirals',
@@ -112,7 +112,7 @@ export const analyzeWorrySpi rals: ChatCompletionTool = {
   },
 };
 
-export const getMoodTimeline: ChatCompletionTool = {
+export const getMoodTimeline: FunctionTool = {
   type: 'function',
   function: {
     name: 'get_mood_timeline',
@@ -137,7 +137,7 @@ export const getMoodTimeline: ChatCompletionTool = {
   },
 };
 
-export const identifyEmotionalTriggers: ChatCompletionTool = {
+export const identifyEmotionalTriggers: FunctionTool = {
   type: 'function',
   function: {
     name: 'identify_emotional_triggers',
@@ -165,7 +165,7 @@ export const identifyEmotionalTriggers: ChatCompletionTool = {
  * Task Intelligence Tools (4)
  */
 
-export const getUpcomingDeadlines: ChatCompletionTool = {
+export const getUpcomingDeadlines: FunctionTool = {
   type: 'function',
   function: {
     name: 'get_upcoming_deadlines',
@@ -192,7 +192,7 @@ export const getUpcomingDeadlines: ChatCompletionTool = {
   },
 };
 
-export const getForgottenTasks: ChatCompletionTool = {
+export const getForgottenTasks: FunctionTool = {
   type: 'function',
   function: {
     name: 'get_forgotten_tasks',
@@ -215,7 +215,7 @@ export const getForgottenTasks: ChatCompletionTool = {
   },
 };
 
-export const suggestTaskBreakdown: ChatCompletionTool = {
+export const suggestTaskBreakdown: FunctionTool = {
   type: 'function',
   function: {
     name: 'suggest_task_breakdown',
@@ -238,7 +238,7 @@ export const suggestTaskBreakdown: ChatCompletionTool = {
   },
 };
 
-export const getPriorityDistribution: ChatCompletionTool = {
+export const getPriorityDistribution: FunctionTool = {
   type: 'function',
   function: {
     name: 'get_priority_distribution',
@@ -266,7 +266,7 @@ export const getPriorityDistribution: ChatCompletionTool = {
  * Search & Context Tools (2)
  */
 
-export const searchItemsAdvanced: ChatCompletionTool = {
+export const searchItemsAdvanced: FunctionTool = {
   type: 'function',
   function: {
     name: 'search_items_advanced',
@@ -313,7 +313,7 @@ export const searchItemsAdvanced: ChatCompletionTool = {
   },
 };
 
-export const getUserContext: ChatCompletionTool = {
+export const getUserContext: FunctionTool = {
   type: 'function',
   function: {
     name: 'get_user_context',
@@ -330,13 +330,13 @@ export const getUserContext: ChatCompletionTool = {
 /**
  * All tools registry
  */
-export const ALL_TOOLS: ChatCompletionTool[] = [
+export const ALL_TOOLS: FunctionTool[] = [
   // Habit Analysis
   analyzeCompletionPatterns,
   analyzeProcrastinationTrends,
   analyzeRecurringAdherence,
   // Anxiety Insights
-  analyzeWorrySpi rals,
+  analyzeWorrySpirals,
   getMoodTimeline,
   identifyEmotionalTriggers,
   // Task Intelligence

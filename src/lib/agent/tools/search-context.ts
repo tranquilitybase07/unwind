@@ -144,7 +144,7 @@ export async function searchItemsAdvanced(
  */
 export async function getUserContext(
   context: ToolContext,
-  params: Record<string, never> // No parameters
+  params: Record<string, any> // No parameters needed, but type must match
 ): Promise<ToolResult> {
   const startTime = Date.now();
 
@@ -193,7 +193,7 @@ export async function getUserContext(
       .eq('status', 'pending');
 
     // Worry spirals
-    const { count: worrySpi rals } = await context.supabase
+    const { count: worrySpirals } = await context.supabase
       .from('items')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', context.userId)
@@ -277,7 +277,7 @@ export async function getUserContext(
         total_items: totalItems || 0,
         completed_items: completedItems || 0,
         pending_items: pendingItems || 0,
-        worry_spirals_captured: worrySpi rals || 0,
+        worry_spirals_captured: worrySpirals || 0,
         active_days_last_30: activeDays,
         completion_rate: totalItems && totalItems > 0
           ? Math.round(((completedItems || 0) / totalItems) * 100)

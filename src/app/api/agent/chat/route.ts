@@ -82,20 +82,16 @@ export async function POST(request: NextRequest) {
               { supabase, userId: user.id },
               (event: StreamEvent) => {
                 // Send event as Server-Sent Event
-                const data = `data: ${JSON.stringify(event)}\n\n`;
+                // If it's a done event, include the threadId
+                const eventToSend = event.type === 'done'
+                  ? { ...event, threadId: activeThreadId }
+                  : event;
+
+                const data = `data: ${JSON.stringify(eventToSend)}\n\n`;
                 controller.enqueue(encoder.encode(data));
 
                 // Close stream on done or error
                 if (event.type === 'done' || event.type === 'error') {
-                  // Send final threadId
-                  const finalEvent = {
-                    type: 'thread_id',
-                    threadId: activeThreadId,
-                  };
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify(finalEvent)}\n\n`)
-                  );
-
                   controller.close();
                 }
               }
