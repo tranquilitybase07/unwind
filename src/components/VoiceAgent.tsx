@@ -41,7 +41,7 @@ export function VoiceAgent({ onComplete }: VoiceAgentProps) {
     },
     onError: (error) => {
       console.error("❌ ElevenLabs error:", error);
-      setError(error.message || "An error occurred");
+      setError(typeof error === 'string' ? error : "An error occurred");
     },
     onMessage: (message: any) => {
       console.log("💬 Full message object:", message);
@@ -266,15 +266,7 @@ export function VoiceAgent({ onComplete }: VoiceAgentProps) {
         {isProcessing && "Processing your thoughts..."}
         {!isProcessing && isConnecting && "Connecting..."}
         {!isProcessing && isConnected && "Connected - I'm listening"}
-        {!isProcessing &&
-          !isConnecting &&
-          !isConnected &&
-          conversation.status === "idle" &&
-          "Ready to start"}
-        {!isProcessing &&
-          conversation.status === "disconnected" &&
-          !transcript &&
-          "Disconnected"}
+        {!isProcessing && !isConnecting && !isConnected && "Ready to start"}
       </div>
 
       {/* Error display */}

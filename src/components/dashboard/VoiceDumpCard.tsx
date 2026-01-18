@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 export function VoiceDumpCard() {
   const router = useRouter();
 
-  const handleComplete = (itemIds: string[]) => {
-    console.log("✅ Voice conversation complete. Items created:", itemIds);
-    // Refresh the page to show new items
+  const handleComplete = (voiceDumpId: string) => {
+    console.log("✅ Voice conversation complete. Voice dump ID:", voiceDumpId);
+    // Refresh the page to show new items (webhook will process in background)
     router.refresh();
   };
 
