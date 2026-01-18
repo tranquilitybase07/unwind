@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_threads: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_message_at: string | null
+          message_count: number | null
+          openai_thread_id: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_message_at?: string | null
+          message_count?: number | null
+          openai_thread_id: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_message_at?: string | null
+          message_count?: number | null
+          openai_thread_id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_threads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_learning_logs: {
         Row: {
           ai_input: string
