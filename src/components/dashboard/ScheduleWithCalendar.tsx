@@ -264,20 +264,28 @@ const ScheduleWithCalendar = () => {
             <p className="text-sm font-medium">Loading schedule...</p>
           </div>
         ) : schedulesForDate.length > 0 ? (
-          schedulesForDate.map((schedule) => (
-            <div key={schedule.id} className={`flex items-center gap-3 p-3 bg-${schedule.bgColor} border-1 border-${schedule.borderColor} rounded-2xl backdrop-blur`}>
-              <div className="text-center min-w-[70px]">
-                <p className="text-sm font-medium text-black">{schedule.time}</p>
+          schedulesForDate.map((schedule, index) => {
+            // Alternate colors: even index = green (primary/accent), odd index = blue (secondary/secondary-foreground)
+            const isEven = index % 2 === 0
+            const bgColor = isEven ? 'bg-accent' : 'bg-secondary'
+            const borderColor = isEven ? 'border-primary' : 'border-secondary-foreground'
+            const iconColor = isEven ? 'text-primary' : 'text-secondary-foreground'
+            
+            return (
+              <div key={schedule.id} className={`flex items-center gap-3 p-3 ${bgColor} border ${borderColor} rounded-2xl backdrop-blur`}>
+                <div className="text-center min-w-[70px]">
+                  <p className="text-sm font-medium text-black">{schedule.time}</p>
+                </div>
+                <div className={`w-10 h-10 bg-white ${iconColor} rounded-xl flex items-center justify-center`}>
+                  <HugeiconsIcon icon={schedule.icon} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-black">{schedule.title}</p>
+                  <p className="text-xs text-gray-400">{schedule.status}</p>
+                </div>
               </div>
-              <div className={`w-10 h-10 bg-white text-${schedule.color} rounded-xl flex items-center justify-center`}>
-                <HugeiconsIcon icon={schedule.icon} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-black">{schedule.title}</p>
-                <p className="text-xs text-gray-400">{schedule.status}</p>
-              </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-gray-400">
             <CalendarIcon className="w-12 h-12 mb-3 text-gray-300" />

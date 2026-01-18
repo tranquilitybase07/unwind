@@ -1,178 +1,222 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client";
 
-export default function Home() {
+import React from "react";
+
+export function Home() {
   return (
-    <div className="min-h-screen bg-[#F5F3F0]">
+    <div className="min-h-screen bg-gradient-to-br from-[#e8f5f0] via-[#f0faf7] to-[#e5f7f1] relative overflow-hidden">
+      {/* Grid background */}
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #10B981 1px, transparent 1px),
+            linear-gradient(to bottom, #10B981 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px'
+        }}
+      />
+
+      {/* Decorative elements */}
+      {/* Leaves/drops - left side */}
+      <div className="absolute left-20 top-72 flex flex-col gap-1">
+        {[...Array(12)].map((_, i) => (
+          <div 
+            key={i} 
+            className="w-1.5 h-3 bg-emerald-600 rounded-full transform rotate-12"
+            style={{ 
+              marginLeft: `${(i % 3) * 8}px`,
+              opacity: 0.5 + (i % 3) * 0.15
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Squiggle decorations - right side */}
+      <svg className="absolute right-24 top-36 w-16 h-16" viewBox="0 0 60 60">
+        <path 
+          d="M10 30 Q20 10, 30 30 Q40 50, 50 30" 
+          stroke="#059669" 
+          strokeWidth="3" 
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path 
+          d="M15 40 Q25 20, 35 40 Q45 60, 55 40" 
+          stroke="#10B981" 
+          strokeWidth="3" 
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      {/* Star burst - right side */}
+      <svg className="absolute right-16 top-56 w-12 h-12" viewBox="0 0 40 40">
+        <path d="M20 5 L22 15 L32 12 L24 20 L32 28 L22 25 L20 35 L18 25 L8 28 L16 20 L8 12 L18 15 Z" 
+          stroke="#10B981" strokeWidth="2" fill="none" />
+      </svg>
+
+      {/* Small leaf decoration - left side near title */}
+      <svg className="absolute left-48 top-40 w-8 h-8" viewBox="0 0 24 24">
+        <path 
+          d="M12 2C12 2 4 8 4 14C4 18 8 22 12 22C16 22 20 18 20 14C20 8 12 2 12 2Z" 
+          fill="#34D399" 
+          opacity="0.6"
+        />
+        <path 
+          d="M12 6V18M8 10C10 12 12 14 12 14M16 10C14 12 12 14 12 14" 
+          stroke="#059669" 
+          strokeWidth="1.5" 
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      {/* Floating circles decoration */}
+      <div className="absolute right-32 bottom-32 w-20 h-20 rounded-full bg-emerald-400/20 blur-xl" />
+      <div className="absolute left-24 bottom-48 w-16 h-16 rounded-full bg-teal-400/20 blur-xl" />
+
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-8 py-6 bg-white shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M10 3.5L13 2v6l-3 1.5L7 8V2l3 1.5z" />
-              <path d="M10 11l3-1.5v6l-3 1.5-3-1.5v-6L10 11z" />
-            </svg>
-          </div>
-          <span className="text-2xl font-bold text-gray-900">Healpoint</span>
+      <nav className="relative z-10 flex items-center justify-between px-12 py-6">
+        <div className="text-2xl font-bold text-emerald-800">Unwind</div>
+        
+        <div className="flex items-center gap-8">
+          <a href="#" className="text-emerald-700 hover:text-emerald-900 transition-colors">Home</a>
+          <a href="/dashboard" className="text-emerald-700 hover:text-emerald-900 transition-colors">Dashboard</a>
+          <a href="#" className="text-emerald-700 hover:text-emerald-900 transition-colors">Company</a>
+          <a href="#" className="text-emerald-700 hover:text-emerald-900 transition-colors">Pricing</a>
         </div>
 
-        <div className="flex items-center gap-8">
-          <Link
-            href="/dashboard"
-            className="text-gray-900 font-medium hover:text-gray-600"
-          >
-            Dashboard
-          </Link>
-          <Link href="/hero" className="text-gray-900 font-medium hover:text-gray-600">
-            Hero
-          </Link>
-          <a href="#" className="text-gray-900 font-medium hover:text-gray-600">
-            Treatments
-          </a>
-          <button className="text-gray-900 font-medium hover:text-gray-600">
-            EN ▼
+        <div className="flex items-center gap-3">
+          {/* Arrow decoration */}
+          <svg className="w-10 h-6" viewBox="0 0 40 24">
+            <path 
+              d="M5 12 Q20 12, 30 12" 
+              stroke="#10B981" 
+              strokeWidth="2" 
+              fill="none"
+              strokeDasharray="2,2"
+            />
+            <path d="M28 8 L34 12 L28 16" stroke="#10B981" strokeWidth="2" fill="none" />
+          </svg>
+          
+          <button className="bg-emerald-600 text-white px-6 py-3 rounded-full font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/25">
+            Sign In
           </button>
         </div>
-
-        <button className="bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800">
-          Sign In
-        </button>
       </nav>
 
       {/* Hero Section */}
-      <main className="px-8 py-16 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
-          <div className="space-y-8">
-            {/* <div className="inline-block">
-              <span className="px-4 py-2 border-2 border-gray-900 rounded-full text-sm font-medium text-gray-900 uppercase tracking-wide">
-                Mental Health at 30's
-              </span>
-            </div> */}
+      <div className="relative z-10 flex flex-col items-center pt-12 pb-8">
+        {/* Badge */}
+        <div className="flex items-center gap-2 mb-6 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-emerald-200">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-emerald-700 text-sm font-medium">Mental wellness made simple</span>
+        </div>
 
-            <h1 className="text-7xl font-bold leading-tight">
-              <span className="text-[#8B5A3C] block">Mental</span>
-              <span className="text-[#8B5A3C] block">health</span>
-              <span className="text-gray-900 block">is</span>
-              <span className="text-gray-900 block">wealth</span>
-            </h1>
+        {/* Main heading */}
+        <h1 className="text-6xl md:text-7xl font-bold text-emerald-900 text-center leading-tight mb-6">
+          Regulate your mood<br />with our solution
+        </h1>
 
-            <div className="flex items-start gap-4 max-w-md">
-              <p className="text-lg text-gray-700 leading-relaxed">
-                To live your life to the fullest, we're continuing to find ways
-                to prevent mental health problems.
-              </p>
-            </div>
-          </div>
+        {/* Subtitle */}
+        <p className="text-emerald-700/80 text-center max-w-md mb-8">
+          To live your life to the fullest, we're continuing to find ways to prevent mental health problems.
+        </p>
 
-          {/* Right Content - Image Grid */}
-          <div className="relative">
-            {/* Top Left - Yellow card */}
-            <div className="absolute top-0 left-0 w-56 h-64 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-3xl shadow-lg overflow-hidden transform -rotate-3">
-              <Image
-                src="/images/leaf_1.png"
-                alt="background"
-                width={500}
-                height={500}
-                className="absolute  bottom-10 right-10 z-0 mix-blend-color-burn opacity-10"
-              />
+        {/* CTA Buttons */}
+        <div className="flex items-center gap-4">
+          <button className="px-8 py-3 border-2 border-emerald-300 rounded-full text-emerald-700 font-medium hover:border-emerald-400 hover:bg-white/50 transition-all backdrop-blur-sm">
+            Learn more
+          </button>
+          <button className="px-8 py-3 bg-emerald-600 text-white rounded-full font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30">
+            Get started
+          </button>
+        </div>
+      </div>
 
-              <Image
-                src="/images/1.png"
-                alt="Happy person"
-                width={224}
-                height={256}
-                className="absolute z-10 w-full h-full object-cover"
-              />
-              <div className="absolute z-20 top-4 right-4 bg-yellow-200 px-3 py-1 rounded-full text-sm font-semibold">
-                Happier
-              </div>
-            </div>
-
-            {/* Top Right - Green card with badge */}
-            <div className="absolute top-8 right-0 w-56 h-64 bg-gradient-to-br from-green-300 to-green-400 rounded-3xl shadow-lg overflow-hidden transform rotate-6">
-              <Image
-                src="/images/leaf_2.png"
-                alt="background"
-                width={500}
-                height={500}
-                className="absolute min-w-full h-full  bottom-10 left-10 z-0 mix-blend-color-burn opacity-10"
-              />
-              <Image
-                src="/images/2.png"
-                alt="Calm person"
-                width={224}
-                height={256}
-                className="absolute z-10 w-full h-full object-cover"
-              />
-              <div className="absolute top-4 right-4 bg-green-200 px-3 py-1 rounded-full text-sm font-semibold">
-                Calm
-              </div>
-              <div className="absolute bottom-4 right-4 bg-orange-400 px-4 py-2 rounded-lg shadow-md">
-                <div className="flex items-center gap-2 text-white">
-                  <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-orange-400 text-xs">✓</span>
-                  </div>
-                  <div className="text-xs font-medium">━━</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Center - Purple card */}
-            <div className="absolute top-32 left-12 w-64 h-72 bg-gradient-to-br from-purple-400 to-purple-500 rounded-3xl shadow-lg overflow-hidden transform -rotate-2">
-              <Image
-                src="/images/3.png"
-                alt="Positive person"
-                width={256}
-                height={288}
-                className="w-full h-full object-cover"
-              />
-
-              <div className="absolute -bottom-8 right-8 bg-purple-300 px-3 py-1 rounded-full text-sm font-semibold">
-                Positive
-              </div>
-            </div>
-
-            {/* Decorative Elements */}
-            <svg
-              className="absolute top-4 right-40 w-8 h-8 text-orange-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-
-            <svg
-              className="absolute bottom-16 right-4 w-10 h-10 text-green-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-
-            {/* Wavy line decoration */}
-            <svg
-              className="absolute bottom-0 right-24 w-24 h-12"
-              viewBox="0 0 100 50"
+      {/* Feature Cards */}
+      <div className="relative z-10 flex justify-center gap-6 px-12 pt-8 pb-16">
+        {/* Card 1 - Free live support (Light Green) */}
+        <div className="w-72 h-96 text-center bg-gradient-to-b from-emerald-300 to-emerald-400 rounded-3xl p-6 transform -rotate-6 hover:rotate-0 transition-transform duration-300 shadow-xl">
+          {/* Decorative squiggle */}
+          <svg className="w-12 h-8 mb-2" viewBox="0 0 48 32">
+            <path 
+              d="M8 16 Q16 4, 24 16 Q32 28, 40 16" 
+              stroke="#065F46" 
+              strokeWidth="3" 
               fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-            >
-              <path
-                d="M0 25 Q 25 10, 50 25 T 100 25"
-                className="text-gray-900"
-              />
-            </svg>
-
-            {/* Spacer for absolute positioning */}
-            <div className="h-96"></div>
+              strokeLinecap="round"
+            />
+          </svg>
+          
+          <h3 className="text-2xl font-bold text-emerald-900 italic mb-3">Free live support</h3>
+          <p className="text-emerald-800 text-sm leading-relaxed mb-4">
+            We're always here when you need us, our free live support will answer all your questions immediately
+          </p>
+          
+          {/* Illustration placeholder */}
+          <div className="flex justify-center mt-auto">
+            <div className="w-40 h-40 rounded-full bg-emerald-200/50 flex items-center justify-center">
+              <span className="text-6xl">🤝</span>
+            </div>
           </div>
         </div>
-      </main>
+
+        {/* Card 2 - Increase Security (Teal) */}
+        <div className="w-72 h-96 text-center bg-gradient-to-b from-teal-400 to-teal-500 rounded-3xl p-6 transform rotate-0 hover:scale-105 transition-transform duration-300 shadow-xl z-10">
+          {/* Decorative squiggle */}
+          <svg className="w-12 h-8 mb-2" viewBox="0 0 48 32">
+            <path 
+              d="M8 16 Q16 4, 24 16 Q32 28, 40 16" 
+              stroke="#134E4A" 
+              strokeWidth="3" 
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
+          
+          <h3 className="text-2xl font-bold text-teal-900 italic mb-3">Increase Security</h3>
+          <p className="text-teal-800 text-sm leading-relaxed text-center mb-4">
+            All communications done through our platform is highly encrypted and fully secure, we care about privacy
+          </p>
+          
+          {/* Illustration placeholder */}
+          <div className="flex justify-center mt-auto">
+            <div className="w-40 h-40 rounded-full bg-teal-300/50 flex items-center justify-center">
+              <span className="text-6xl">🔒</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3 - Intuitive interface (Mint) */}
+        <div className="w-72 h-96 text-center bg-gradient-to-b from-green-300 to-green-400 rounded-3xl p-6 transform rotate-6 hover:rotate-0 transition-transform duration-300 shadow-xl">
+          {/* Decorative squiggle */}
+          <svg className="w-12 h-8 mb-2" viewBox="0 0 48 32">
+            <path 
+              d="M8 16 Q16 4, 24 16 Q32 28, 40 16" 
+              stroke="#166534" 
+              strokeWidth="3" 
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
+          
+          <h3 className="text-2xl font-bold text-green-900 italic mb-3">Intuitive interface</h3>
+          <p className="text-green-800 text-sm leading-relaxed text-center mb-4">
+            Our system provides the most intuitive interface built based on extensive user interaction and research.
+          </p>
+          
+          {/* Illustration placeholder */}
+          <div className="flex justify-center mt-auto">
+            <div className="w-40 h-40 rounded-full bg-green-200/50 flex items-center justify-center">
+              <span className="text-6xl">✨</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default Home;

@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Calendar, Tag, Loader2, Clock, Plus, MoreVertical, Check } from "lucide-react"
+import { ArrowLeft, Calendar, Tag, Loader2, Clock, Plus, MoreVertical, Check, Edit, Trash2 } from "lucide-react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { HealthIcon } from "@hugeicons/core-free-icons"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { format, parseISO, isPast, isToday, isTomorrow } from "date-fns"
+import AddTaskModal from "./AddTaskModal"
+import EditTaskModal from "./EditTaskModal"
+import DeleteConfirmModal from "./DeleteConfirmModal"
 
 interface DashboardItem {
   id: string
@@ -50,10 +53,139 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
   const router = useRouter()
   const [items, setItems] = useState<DashboardItem[]>([])
   const [category, setCategory] = useState<Category | null>(null)
+  const [allCategories, setAllCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<"all" | "today" | "week">("all")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const { user } = useAuth()
   const supabase = createClient()
+
+  // Refresh items helper
+  const refreshItems = async () => {
+    if (!user) return
+    const { data: itemsData } = await supabase
+      .from("items")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("category_id", categoryId)
+      .neq("status", "completed")
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("priority", { ascending: false })
+
+    if (itemsData) {
+      setItems(itemsData as Item[])
+    }
+  }
+
+  // Handle task submission from modal
+  const handleAddTask = async (task: {
+    title: string
+    note: string
+    categoryId: string
+    tags: string[]
+    priority: "low" | "medium" | "high"
+  }) => {
+    if (!user) return
+
+    const { error } = await supabase.from("items").insert({
+      user_id: user.id,
+      category_id: task.categoryId,
+      title: task.title,
+      description: task.note,
+      priority: task.priority,
+      custom_tags: task.tags,
+      status: "pending",
+    })
+
+    if (error) {
+      console.error("Error adding task:", error)
+      return
+    }
+
+    await refreshItems()
+  }
+
+  // Handle edit task
+  const handleEditTask = async (task: {
+    id: string
+    title: string
+    note: string
+    categoryId: string
+    tags: string[]
+    priority: "low" | "medium" | "high"
+    status: "pending" | "completed"
+  }) => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from("items")
+      .update({
+        title: task.title,
+        description: task.note,
+        priority: task.priority,
+        custom_tags: task.tags,
+        status: task.status,
+        category_id: task.categoryId,
+      })
+      .eq("id", task.id)
+      .eq("user_id", user.id)
+      .select()
+
+    if (error) {
+      console.error("Error updating task:", JSON.stringify(error, null, 2))
+      return
+    }
+
+    console.log("Task updated successfully:", data)
+    await refreshItems()
+  }
+
+  // Handle delete task
+  const handleDeleteTask = async () => {
+    if (!user || !selectedItem) return
+
+    const { error } = await supabase
+      .from("items")
+      .delete()
+      .eq("id", selectedItem.id)
+
+    if (error) {
+      console.error("Error deleting task:", error)
+      return
+    }
+
+    setSelectedItem(null)
+    await refreshItems()
+  }
+
+  // Open edit modal
+  const openEditModal = (item: Item) => {
+    setSelectedItem(item)
+    setIsEditModalOpen(true)
+    setOpenDropdownId(null)
+  }
+
+  // Open delete modal
+  const openDeleteModal = (item: Item) => {
+    setSelectedItem(item)
+    setIsDeleteModalOpen(true)
+    setOpenDropdownId(null)
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [openDropdownId])
 
   useEffect(() => {
     async function fetchCategoryAndItems() {
@@ -63,6 +195,16 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
       }
 
       setLoading(true)
+
+      // Fetch all categories for the dropdowns
+      const { data: allCatsData } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('name')
+
+      if (allCatsData) {
+        setAllCategories(allCatsData)
+      }
 
       // Fetch category details
       const { data: categoryData, error: categoryError } = await supabase
@@ -177,7 +319,10 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
               <p className="text-sm text-gray-500">{filteredItems.length} items</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-colors">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-colors"
+          >
             <Plus className="w-4 h-4" />
             Add Item
           </button>
@@ -239,9 +384,43 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                       <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                     )}
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity">
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenDropdownId(openDropdownId === item.id ? null : item.id)
+                      }}
+                      className="cursor-pointer opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity p-1"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {openDropdownId === item.id && (
+                      <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden min-w-[140px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditModal(item)
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDeleteModal(item)
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
@@ -296,7 +475,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                 </div>
 
                 {/* Score Indicators */}
-                <div className="mt-4 grid grid-cols-3 gap-3">
+                {/* <div className="mt-4 grid grid-cols-3 gap-3">
                   <div className="flex flex-col">
                     <span className="text-xs text-gray-500 mb-1">Urgency</span>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -324,12 +503,52 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
                       />
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddTask}
+        categories={allCategories}
+        defaultCategoryId={categoryId}
+      />
+
+      {/* Edit Task Modal */}
+      <EditTaskModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setSelectedItem(null)
+        }}
+        onSubmit={handleEditTask}
+        categories={allCategories}
+        initialData={selectedItem ? {
+          id: selectedItem.id,
+          title: selectedItem.title,
+          description: selectedItem.description,
+          priority: selectedItem.priority,
+          status: selectedItem.status,
+          custom_tags: selectedItem.custom_tags,
+          category_id: categoryId,
+        } : undefined}
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setSelectedItem(null)
+        }}
+        onConfirm={handleDeleteTask}
+        itemTitle={selectedItem?.title || ""}
+      />
     </div>
   )
 }

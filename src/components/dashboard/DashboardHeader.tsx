@@ -38,15 +38,13 @@ export function DashboardHeader() {
         </button>
 
         {/* Sign Out Button */}
-        <Button
+        <button
           onClick={handleSignOut}
-          variant="ghost"
-          size="sm"
-          className="gap-2"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
-        </Button>
+        </button>
       </div>
     </div>
   );
