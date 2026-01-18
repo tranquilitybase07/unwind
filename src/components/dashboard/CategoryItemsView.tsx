@@ -59,7 +59,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const { user } = useAuth()
   const supabase = createClient()
@@ -77,7 +77,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
       .order("priority", { ascending: false })
 
     if (itemsData) {
-      setItems(itemsData as Item[])
+      setItems(itemsData as DashboardItem[])
     }
   }
 
@@ -163,14 +163,14 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
   }
 
   // Open edit modal
-  const openEditModal = (item: Item) => {
+  const openEditModal = (item: DashboardItem) => {
     setSelectedItem(item)
     setIsEditModalOpen(true)
     setOpenDropdownId(null)
   }
 
   // Open delete modal
-  const openDeleteModal = (item: Item) => {
+  const openDeleteModal = (item: DashboardItem) => {
     setSelectedItem(item)
     setIsDeleteModalOpen(true)
     setOpenDropdownId(null)
@@ -532,8 +532,8 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
           id: selectedItem.id,
           title: selectedItem.title,
           description: selectedItem.description,
-          priority: selectedItem.priority,
-          status: selectedItem.status,
+          priority: selectedItem.priority || "medium",
+          status: selectedItem.status || "pending",
           custom_tags: selectedItem.custom_tags,
           category_id: categoryId,
         } : undefined}

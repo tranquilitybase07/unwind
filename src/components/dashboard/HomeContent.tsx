@@ -1,9 +1,6 @@
 "use client"
 
-import { Mic } from "lucide-react";
-import UpcomingSchedule from "./UpcomingSchedule";
 import HealthChart from "./HealthChart";
-import FeatureCard from "./FeatureCard";
 import ScheduleWithCalendar from "./ScheduleWithCalendar";
 import { VoiceDumpCard } from "./VoiceDumpCard";
 
