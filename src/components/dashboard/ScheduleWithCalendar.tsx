@@ -156,7 +156,7 @@ const ScheduleWithCalendar = () => {
       {/* Header with calendar icon */}
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-lg">Upcoming schedule</h3>
-        <button 
+        <button
           onClick={() => setShowCalendar(!showCalendar)}
           className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors hover:cursor-pointer"
         >
@@ -172,7 +172,7 @@ const ScheduleWithCalendar = () => {
         <div className="absolute top-16 right-4 bg-white rounded-2xl p-4 shadow-2xl z-50 border border-gray-200 w-80">
           {/* Month/Year Navigation */}
           <div className="flex items-center justify-between mb-4">
-            <button 
+            <button
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
             >
@@ -198,7 +198,7 @@ const ScheduleWithCalendar = () => {
                 ))}
               </select>
             </div>
-            <button 
+            <button
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
             >
@@ -221,21 +221,19 @@ const ScheduleWithCalendar = () => {
               <button
                 key={index}
                 onClick={() => handleDateSelect(date)}
-                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-all relative ${
-                  isSameDay(date, selectedDate)
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-all relative ${isSameDay(date, selectedDate)
                     ? "bg-blue-500 text-white"
                     : isSameDay(date, new Date())
-                    ? "bg-blue-100 text-blue-600"
-                    : isCurrentMonth(date)
-                    ? "text-gray-800 hover:bg-gray-100"
-                    : "text-gray-300"
-                }`}
+                      ? "bg-blue-100 text-blue-600"
+                      : isCurrentMonth(date)
+                        ? "text-gray-800 hover:bg-gray-100"
+                        : "text-gray-300"
+                  }`}
               >
                 {format(date, "d")}
                 {hasSchedule(date) && (
-                  <div className={`absolute bottom-1 w-1 h-1 rounded-full ${
-                    isSameDay(date, selectedDate) ? "bg-white" : "bg-blue-500"
-                  }`} />
+                  <div className={`absolute bottom-1 w-1 h-1 rounded-full ${isSameDay(date, selectedDate) ? "bg-white" : "bg-blue-500"
+                    }`} />
                 )}
               </button>
             ))}
@@ -271,9 +269,9 @@ const ScheduleWithCalendar = () => {
               const bgColor = isEven ? 'bg-accent' : 'bg-secondary'
               const borderColor = isEven ? 'border-primary' : 'border-secondary-foreground'
               const iconColor = isEven ? 'text-primary' : 'text-secondary-foreground'
-              
+
               return (
-                <div key={schedule.id} className={`flex items-center gap-3 p-3 ${bgColor} border ${borderColor} rounded-2xl backdrop-blur`}>
+                <div key={schedule.id} className={`flex items-center gap-3 p-3 rounded-2xl backdrop-blur`}>
                   <div className="text-center min-w-[70px]">
                     <p className="text-sm font-medium text-black">{schedule.time}</p>
                   </div>
