@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { format, parseISO, isPast, isToday, isTomorrow } from "date-fns"
 
-interface Item {
+interface DashboardItem {
   id: string
   title: string
   description: string | null
@@ -48,7 +48,7 @@ const statusColors = {
 
 export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps) {
   const router = useRouter()
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<DashboardItem[]>([])
   const [category, setCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<"all" | "today" | "week">("all")
@@ -95,7 +95,7 @@ export default function CategoryItemsView({ categoryId }: CategoryItemsViewProps
         return
       }
 
-      setItems(itemsData || [])
+      setItems((itemsData as unknown as DashboardItem[]) || [])
       setLoading(false)
     }
 
