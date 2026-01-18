@@ -135,7 +135,7 @@ export function formatWorrySpiralInsights(data: {
 }
 
 /**
- * Format upcoming deadlines with risk-based prioritization
+ * Format upcoming deadlines with time-aware, context-sensitive messaging
  */
 export function formatDeadlineInsights(deadlines: {
   overdue: any[];
@@ -145,17 +145,110 @@ export function formatDeadlineInsights(deadlines: {
 }) {
   const { overdue, today, urgent, upcoming } = deadlines;
 
-  const totalCritical = overdue.length + today.length + urgent.length;
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
 
-  let summary = '';
+  // Build natural language summary
+  const parts: string[] = [];
 
-  if (totalCritical === 0) {
-    summary = "You're on top of your urgent tasks right now. That's something to acknowledge.";
-  } else if (totalCritical <= 3) {
-    summary = `You have ${totalCritical} time-sensitive items. Let's focus on those first.`;
-  } else {
-    summary = `I see ${totalCritical} urgent items. That can feel like a lot. Let's break down which 2-3 matter most right now.`;
+  // Current time context
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  parts.push(`Right now it's ${timeStr}.`);
+
+  // Today's tasks with time awareness
+  if (today.length > 0) {
+    const tasksWithTime = today.filter(t => t.due_time);
+    const tasksWithoutTime = today.filter(t => !t.due_time);
+
+    // Categorize by timing
+    const upcoming: any[] = [];
+    const passed: any[] = [];
+
+    tasksWithTime.forEach(task => {
+      const [hours, minutes] = task.due_time.split(':').map(Number);
+      const taskTime = hours * 60 + minutes;
+      const currentTime = currentHour * 60 + currentMinute;
+
+      if (taskTime > currentTime) {
+        upcoming.push({ ...task, timeInMinutes: taskTime - currentTime });
+      } else {
+        passed.push(task);
+      }
+    });
+
+    // Sort upcoming by time
+    upcoming.sort((a, b) => a.timeInMinutes - b.timeInMinutes);
+
+    if (upcoming.length > 0) {
+      parts.push(`\n\n**Coming up today:**`);
+      upcoming.forEach(task => {
+        const timeLabel = task.timeInMinutes < 60
+          ? '[SOON]'
+          : task.timeInMinutes < 180
+            ? '[IN A FEW HOURS]'
+            : '';
+
+        parts.push(`• ${task.due_time} - ${task.title} ${timeLabel}`);
+      });
+    }
+
+    if (tasksWithoutTime.length > 0) {
+      if (upcoming.length > 0) {
+        parts.push(`\n**Also today:**`);
+      } else {
+        parts.push(`\n**Today:**`);
+      }
+      tasksWithoutTime.forEach(task => {
+        parts.push(`• ${task.title}`);
+      });
+    }
+
+    if (passed.length > 0) {
+      parts.push(`\n**Earlier today:**`);
+      passed.forEach(task => {
+        parts.push(`• ${task.due_time} - ${task.title}`);
+      });
+    }
+
+    // Add encouragement only when needed
+    const hasHighStress = today.some(t => t.final_priority_score > 70);
+    if (today.length <= 3 && !hasHighStress) {
+      parts.push(`\nThat's ${today.length} ${today.length === 1 ? 'thing' : 'things'} total. Manageable.`);
+    } else if (hasHighStress) {
+      const stressTask = today.find(t => t.final_priority_score > 70);
+      parts.push(`\nI know ${stressTask.title.toLowerCase()} might feel heavy. Take it one step at a time.`);
+    }
   }
+
+  // Overdue (show with empathy, not shame)
+  if (overdue.length > 0) {
+    parts.push(`\n\n**From earlier:**`);
+    overdue.slice(0, 3).forEach(task => {
+      const dueDate = formatDate(new Date(task.due_date), true);
+      parts.push(`• ${task.title} (was ${dueDate})`);
+    });
+    if (overdue.length > 3) {
+      parts.push(`• ...and ${overdue.length - 3} more`);
+    }
+    parts.push(`\nNo shame - sometimes things slip. What matters is what you do next.`);
+  }
+
+  // Urgent (next 3 days)
+  if (urgent.length > 0) {
+    parts.push(`\n\n**This week:**`);
+    urgent.slice(0, 3).forEach(task => {
+      const dueDate = formatDate(new Date(task.due_date), true);
+      parts.push(`• ${task.title} (${dueDate})`);
+    });
+  }
+
+  // Clean message
+  const summary = parts.join('\n');
 
   return {
     summary,
@@ -167,7 +260,7 @@ export function formatDeadlineInsights(deadlines: {
 }
 
 /**
- * Format a single deadline item
+ * Format a single deadline item (internal use)
  */
 function formatDeadlineItem(item: any) {
   return {

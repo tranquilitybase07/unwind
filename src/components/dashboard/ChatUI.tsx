@@ -145,35 +145,63 @@ export default function ChatUI() {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
+  const quickActions = [
+    { label: "Analyze sleep" },
+    { label: "Start meditation" },
+    { label: "Daily recap" },
+  ]
+
   return (
     <div className="flex h-full w-full flex-col">
       {/* Conversation Area - This scrolls */}
       <Conversation className="flex-1 overflow-y-auto">
         <ConversationContent>
           {messages.length === 0 ? (
-            <ConversationEmptyState
-              title={
-                <ShimmeringText
-                  text="How can I help you today?"
-                  duration={2}
-                  className="text-lg font-semibold"
+            <div className="flex-1 flex flex-col items-center justify-center px-2 py-8 mt-8">
+              {/* Avatar */}
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-6 shadow-lg">
+                <img
+                  src="/images/2.png"
+                  alt="AI Assistant"
+                  className="w-full h-full object-cover"
                 />
-              }
-              description="I can help you understand your mental health patterns, analyze your habits, and provide insights about your well-being."
-              icon={<IconSparkles className="h-12 w-12" />}
-            />
+              </div>
+
+              {/* Greeting */}
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">
+                Hey, how you<br />feeling today?
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-gray-500 text-sm text-center mb-8 leading-relaxed">
+                I&apos;m your personal Unwind companion.<br />
+                Tell me anything, or just breathe with me.
+              </p>
+
+              {/* Quick Action Buttons */}
+              <div className="flex flex-wrap justify-center gap-2">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-100 hover:border-gray-300 transition-colors"
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col gap-1">
               {messages.map((message) => (
                 <Message key={message.id} from={message.role}>
-                  <MessageAvatar
+                  {/* <MessageAvatar
                     src={
                       message.role === "user"
                         ? "/avatar-user.png"
                         : "/avatar-agent.png"
                     }
                     name={message.role === "user" ? "You" : "Agent"}
-                  />
+                  /> */}
                   <MessageContent variant="flat">
                     {message.role === "assistant" ? (
                       <>
@@ -205,7 +233,7 @@ export default function ChatUI() {
               {/* Typing indicator when thinking */}
               {isLoading && (
                 <Message from="assistant">
-                  <MessageAvatar src="/avatar-agent.png" name="Agent" />
+                  {/* <MessageAvatar src="/avatar-agent.png" name="Agent" /> */}
                   <MessageContent variant="flat">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
@@ -227,7 +255,7 @@ export default function ChatUI() {
       </Conversation>
 
       {/* Input Area - Fixed at bottom */}
-      <div className="border-t border-border bg-background p-4">
+      <div className="pr-4 pb-4">
         <div className="mx-auto max-w-3xl">
           <div className="flex min-h-[60px] flex-col rounded-2xl border border-border bg-card shadow-sm">
             <div className="relative flex-1 overflow-y-auto max-h-[200px]">
@@ -263,10 +291,10 @@ export default function ChatUI() {
           </div>
 
           {/* Helper text */}
-          <p className="mt-2 text-center text-xs text-muted-foreground">
+          {/* <p className="mt-2 text-center text-xs text-muted-foreground">
             Press <kbd className="rounded bg-muted px-1">Enter</kbd> to send,{" "}
             <kbd className="rounded bg-muted px-1">Shift+Enter</kbd> for new line
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
