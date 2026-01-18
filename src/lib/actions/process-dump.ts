@@ -4,13 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { extractItemsFromTranscript } from '@/lib/ai/prompts'
 import type { Database } from '@/lib/supabase/types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-export async function processVoiceDump(voiceDumpId: string) {
-  console.log('🧠 [SERVER] processVoiceDump started for:', voiceDumpId)
-
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  console.log('🔑 [SERVER] Action Session Token:', session?.access_token ? session.access_token.substring(0, 15) + '...' : 'No session found')
+// Internal processing function that accepts a Supabase client
+// This allows it to be called from webhooks with service role client
+async function processVoiceDumpInternal(
+  voiceDumpId: string,
+  supabase: SupabaseClient<Database>
+) {
+  console.log('🧠 Processing voice dump:', voiceDumpId)
   
   // 1. Fetch the voice dump
   const { data: voiceDump, error: dumpError } = await supabase
@@ -137,3 +139,17 @@ export async function processVoiceDump(voiceDumpId: string) {
     return { error: 'AI Processing failed' }
   }
 }
+
+// Public server action for client-side calls (uses authenticated client)
+export async function processVoiceDump(voiceDumpId: string) {
+  console.log('🧠 [SERVER] processVoiceDump started for:', voiceDumpId)
+
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  console.log('🔑 [SERVER] Action Session Token:', session?.access_token ? session.access_token.substring(0, 15) + '...' : 'No session found')
+
+  return processVoiceDumpInternal(voiceDumpId, supabase)
+}
+
+// Export for webhooks that use service role client
+export { processVoiceDumpInternal as processVoiceDumpWithClient }

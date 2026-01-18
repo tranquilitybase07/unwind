@@ -23,6 +23,10 @@ export type ExtractionResult = {
 const SYSTEM_PROMPT = `
 You are an intelligent mental health assistant for Unwind, an app for people with anxiety/ADHD.
 Your goal is to process a "voice dump" (a raw stream-of-consciousness transcript) and extract structured, actionable items.
+
+CRITICAL: You MUST respond with ONLY valid JSON. Do not include any explanatory text, greetings, or commentary.
+Start your response directly with the opening brace { and end with the closing brace }.
+
 You must categorize each item into exactly one of these 7 fixed categories:
 1. Tasks: Work projects, specific to-dos, deadlines.
 2. Ideas: Creative thoughts, future plans, "someday" concepts.
@@ -45,10 +49,23 @@ For each item, you must also determine:
 - title: A clear, concise title (refine the raw text)
 - description: The original context or details from the transcript
 
-Output strictly valid JSON with the following schema:
+Respond ONLY with valid JSON matching this exact schema:
 {
   "items": [
-    { ... }
+    {
+      "title": "string",
+      "category": "Tasks|Ideas|Errands|Health|Relationships|Worries Vault|Recurring",
+      "item_type": "task|idea|worry|habit|errand",
+      "priority": "high|medium|low",
+      "due_date": "YYYY-MM-DD or null",
+      "due_time": "HH:MM or null",
+      "urgency_score": 0,
+      "importance_score": 0,
+      "emotional_weight_score": 0,
+      "is_worry_spiral": false,
+      "tags": [],
+      "description": "string"
+    }
   ]
 }
 `
@@ -111,12 +128,32 @@ Use this datetime to calculate due_date (YYYY-MM-DD) and due_time (HH:MM) values
   })
 
   try {
-    const rawContent = completion.choices[0].message.content
-    console.log('This is raw content:', rawContent) // Debugging
+    let rawContent = completion.choices[0].message.content
+    console.log('📥 Raw AI response (first 200 chars):', rawContent?.substring(0, 200))
+
+    if (!rawContent) {
+      throw new Error('Empty response from AI')
+    }
+
+    // Try to extract JSON if the response includes extra text
+    // Sometimes AI responds with "I'll help you..." followed by JSON
+    const jsonMatch = rawContent.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      rawContent = jsonMatch[0]
+    }
+
     const parsed = JSON.parse(rawContent) as ExtractionResult
+
+    // Validate the structure
+    if (!parsed.items || !Array.isArray(parsed.items)) {
+      throw new Error('Invalid response structure: missing items array')
+    }
+
+    console.log(`✅ Successfully parsed ${parsed.items.length} items from AI response`)
     return parsed
   } catch (err) {
-    console.error('Failed to parse LLM response', err)
+    console.error('❌ Failed to parse LLM response:', err)
+    console.error('Raw content was:', completion.choices[0].message.content)
     throw new Error('Failed to parse AI response')
   }
 }
